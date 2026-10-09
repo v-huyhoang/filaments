@@ -3,7 +3,7 @@
 namespace App\Filament\Resources\Rooms\Pages;
 
 use App\Filament\Resources\Rooms\RoomResource;
-use Filament\Actions\CreateAction;
+use Filament\Actions\Action;
 use Filament\Resources\Pages\ListRecords;
 
 class ListRooms extends ListRecords
@@ -13,7 +13,8 @@ class ListRooms extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            CreateAction::make(),
+            Action::make('create')
+                ->url(RoomResource::getUrl('create')),
         ];
     }
 }
