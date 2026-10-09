@@ -22,6 +22,6 @@ class PropertyForm
                 Toggle::make('is_active')
                     ->inline(false)
                     ->default(true),
-            ]);
+            ]); 
     }
 }

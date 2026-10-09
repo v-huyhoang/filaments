@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Properties\Tables;
 
 use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\RestoreAction;
@@ -35,15 +36,16 @@ class PropertiesTable
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                TrashedFilter::make(),
                 TernaryFilter::make('is_active')
                 ->label('Trạng thái')
                 ->placeholder('Tất cả')
                 ->trueLabel('Đang hoạt động')
-                ->falseLabel('Ngừng hoạt động')
+                ->falseLabel('Ngừng hoạt động'),
+                TrashedFilter::make()
             ])
             ->recordActions([
                 EditAction::make(),
+                DeleteAction::make(),
                 RestoreAction::make(),
             ])
             ->toolbarActions([

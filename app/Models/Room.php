@@ -1,0 +1,39 @@
+<?php
+
+namespace App\Models;
+
+use App\Enums\RoomStatus;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\SoftDeletes;
+
+class Room extends Model
+{
+    //
+    use HasFactory, SoftDeletes;
+
+    protected $fillable = [
+        'property_id',
+        'room_number',
+        'floor',
+        'area',
+        'base_rent',
+        'deposit_amount',
+        'max_occupants',
+        'status',
+        'description'
+    ];
+
+    protected function casts(): array
+    {
+        return [
+            'status' => RoomStatus::class,
+        ];
+    }
+
+    public function property(): BelongsTo
+    {
+        return $this->belongsTo(Property::class, 'property_id');
+    }
+}
