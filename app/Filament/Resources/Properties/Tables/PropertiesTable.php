@@ -20,33 +20,33 @@ class PropertiesTable
         return $table
             ->columns([
                 TextColumn::make('name')
-                    ->label('Tên bất động sản')
+                    ->label(fn (): string => __('tables.property_name'))
                     ->searchable(),
                 TextColumn::make('address')
-                    ->label('Địa chỉ')
+                    ->label(fn (): string => __('tables.address'))
                     ->searchable(),
                 TextColumn::make('is_active')
-                    ->label('Trạng thái')
+                    ->label(fn (): string => __('tables.status'))
                     ->badge()
-                    ->formatStateUsing(fn (bool $state): string => $state ? 'Đang hoạt động' : 'Ngừng hoạt động'),
+                    ->formatStateUsing(fn (bool $state): string => $state ? __('tables.active') : __('tables.inactive')),
                 TextColumn::make('created_at')
-                    ->label('Ngày tạo')
+                    ->label(fn (): string => __('tables.created_at'))
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('updated_at')
-                    ->label('Cập nhật lúc')
+                    ->label(fn (): string => __('tables.updated_at'))
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 TernaryFilter::make('is_active')
-                    ->label('Trạng thái')
-                    ->placeholder('Tất cả')
-                    ->trueLabel('Đang hoạt động')
-                    ->falseLabel('Ngừng hoạt động'),
-                TrashedFilter::make()->label('Đã xóa'),
+                    ->label(fn (): string => __('tables.status'))
+                    ->placeholder(fn (): string => __('tables.all'))
+                    ->trueLabel(fn (): string => __('tables.active'))
+                    ->falseLabel(fn (): string => __('tables.inactive')),
+                TrashedFilter::make()->label(fn (): string => __('tables.trashed')),
             ])
             ->recordActions([
                 EditAction::make(),

@@ -19,32 +19,27 @@ class RoomReservationsTable
     {
         return $table
             ->columns([
-                TextColumn::make('room.property.name')->label('Bất động sản')->searchable(),
-                TextColumn::make('room.room_number')->label('Phòng')->searchable(),
-                TextColumn::make('tenant.full_name')->label('Người thuê')->searchable(),
-                TextColumn::make('expected_move_in_date')->label('Ngày dự kiến nhận phòng')->date()->sortable(),
-                TextColumn::make('hold_amount')->label('Tiền giữ chỗ')->money('VND')->sortable(),
-                TextColumn::make('paid_at')->label('Thời điểm thanh toán')->dateTime()->sortable(),
-                TextColumn::make('expires_at')->label('Thời hạn giữ chỗ')->dateTime()->sortable(),
-                TextColumn::make('status')->label('Trạng thái')->badge(),
+                TextColumn::make('room.property.name')->label(fn (): string => __('tables.property'))->searchable(),
+                TextColumn::make('room.room_number')->label(fn (): string => __('tables.room'))->searchable(),
+                TextColumn::make('tenant.full_name')->label(fn (): string => __('tables.tenant'))->searchable(),
+                TextColumn::make('expected_move_in_date')->label(fn (): string => __('tables.expected_move_in_date'))->date()->sortable(),
+                TextColumn::make('hold_amount')->label(fn (): string => __('tables.hold_amount'))->money('VND')->sortable(),
+                TextColumn::make('paid_at')->label(fn (): string => __('tables.paid_at'))->dateTime()->sortable(),
+                TextColumn::make('expires_at')->label(fn (): string => __('tables.expires_at'))->dateTime()->sortable(),
+                TextColumn::make('status')->label(fn (): string => __('tables.status'))->badge(),
             ])
             ->filters([
-                SelectFilter::make('status')->label('Trạng thái')->options([
-                    RoomReservationStatus::Held->value => 'Đang giữ chỗ',
-                    RoomReservationStatus::Cancelled->value => 'Đã hủy',
-                    RoomReservationStatus::Expired->value => 'Đã hết hạn',
-                    RoomReservationStatus::Converted->value => 'Đã chuyển thành hợp đồng',
-                ]),
+                SelectFilter::make('status')->label(fn (): string => __('tables.status'))->options(RoomReservationStatus::class),
             ])
             ->recordActions([
                 Action::make('convertToContract')
-                    ->label('Chuyển thành hợp đồng')
+                    ->label(fn (): string => __('tables.convert_to_contract'))
                     ->schema([
-                        DatePicker::make('end_date')->label('Ngày kết thúc'),
-                        TextInput::make('rent_amount')->label('Giá thuê')->numeric()->minValue(0)->required(),
-                        TextInput::make('deposit_amount')->label('Tiền cọc')->numeric()->minValue(0)->default(0)->required(),
-                        TextInput::make('payment_due_day')->label('Ngày đến hạn thanh toán')->numeric()->minValue(1)->maxValue(28)->required(),
-                        TextInput::make('notes')->label('Ghi chú'),
+                        DatePicker::make('end_date')->label(fn (): string => __('tables.end_date')),
+                        TextInput::make('rent_amount')->label(fn (): string => __('tables.rent_amount'))->numeric()->minValue(0)->required(),
+                        TextInput::make('deposit_amount')->label(fn (): string => __('tables.deposit_amount'))->numeric()->minValue(0)->default(0)->required(),
+                        TextInput::make('payment_due_day')->label(fn (): string => __('tables.payment_due_day'))->numeric()->minValue(1)->maxValue(28)->required(),
+                        TextInput::make('notes')->label(fn (): string => __('tables.notes')),
                     ])
                     ->visible(fn (RoomReservation $record): bool => $record->status === RoomReservationStatus::Held && $record->expires_at->isFuture())
                     ->action(function (RoomReservation $record, array $data): void {

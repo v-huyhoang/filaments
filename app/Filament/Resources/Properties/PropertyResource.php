@@ -22,9 +22,15 @@ class PropertyResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedBuildingOffice2;
 
-    protected static ?string $modelLabel = 'bất động sản';
+    public static function getModelLabel(): string
+    {
+        return __('resources.property.label');
+    }
 
-    protected static ?string $pluralModelLabel = 'bất động sản';
+    public static function getPluralModelLabel(): string
+    {
+        return __('resources.property.plural_label');
+    }
 
     protected static ?string $recordTitleAttribute = 'name';
 

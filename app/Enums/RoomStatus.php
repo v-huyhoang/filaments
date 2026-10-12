@@ -13,11 +13,6 @@ enum RoomStatus: string implements HasLabel
 
     public function getLabel(): ?string
     {
-        return match ($this) {
-            self::AVAILABLE => 'Còn trống',
-            self::OCCUPIED => 'Đang có người thuê',
-            self::MAINTENANCE => 'Bảo trì',
-            self::INACTIVE => 'Ngừng hoạt động',
-        };
+        return __('statuses.room.'.$this->value);
     }
 }

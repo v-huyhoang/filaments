@@ -22,9 +22,15 @@ class RoomResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedHome;
 
-    protected static ?string $modelLabel = 'phòng';
+    public static function getModelLabel(): string
+    {
+        return __('resources.room.label');
+    }
 
-    protected static ?string $pluralModelLabel = 'phòng';
+    public static function getPluralModelLabel(): string
+    {
+        return __('resources.room.plural_label');
+    }
 
     protected static ?string $recordTitleAttribute = 'room_number';
 

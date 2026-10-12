@@ -15,13 +15,6 @@ enum ContractStatus: string implements HasLabel
 
     public function getLabel(): ?string
     {
-        return match ($this) {
-            self::Draft => 'Bản nháp',
-            self::Scheduled => 'Đã lên lịch',
-            self::Active => 'Đang hiệu lực',
-            self::Expired => 'Đã hết hạn',
-            self::Terminated => 'Đã chấm dứt',
-            self::Cancelled => 'Đã hủy',
-        };
+        return __('statuses.contract.'.$this->value);
     }
 }

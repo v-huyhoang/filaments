@@ -21,9 +21,15 @@ class RoomReservationResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedBookmarkSquare;
 
-    protected static ?string $modelLabel = 'giữ chỗ';
+    public static function getModelLabel(): string
+    {
+        return __('resources.room_reservation.label');
+    }
 
-    protected static ?string $pluralModelLabel = 'giữ chỗ';
+    public static function getPluralModelLabel(): string
+    {
+        return __('resources.room_reservation.plural_label');
+    }
 
     public static function form(Schema $schema): Schema
     {

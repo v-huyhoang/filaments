@@ -22,53 +22,53 @@ class RoomsTable
         return $table
             ->columns([
                 TextColumn::make('property.name')
-                    ->label('Bất động sản')
+                    ->label(fn (): string => __('tables.property'))
                     ->searchable(),
                 TextColumn::make('room_number')
-                    ->label('Số phòng')
+                    ->label(fn (): string => __('tables.room_number'))
                     ->searchable(),
                 TextColumn::make('floor')
-                    ->label('Tầng')
+                    ->label(fn (): string => __('tables.floor'))
                     ->numeric()
                     ->sortable(),
                 TextColumn::make('area')
-                    ->label('Diện tích (m²)')
+                    ->label(fn (): string => __('tables.area'))
                     ->numeric()
                     ->sortable(),
                 TextColumn::make('base_rent')
-                    ->label('Giá thuê cơ bản')
+                    ->label(fn (): string => __('tables.base_rent'))
                     ->numeric()
                     ->sortable(),
                 TextColumn::make('deposit_amount')
-                    ->label('Tiền cọc')
+                    ->label(fn (): string => __('tables.deposit_amount'))
                     ->numeric()
                     ->sortable(),
                 TextColumn::make('max_occupants')
-                    ->label('Số người ở tối đa')
+                    ->label(fn (): string => __('tables.max_occupants'))
                     ->numeric()
                     ->sortable(),
                 TextColumn::make('status')
-                    ->label('Trạng thái')
+                    ->label(fn (): string => __('tables.status'))
                     ->badge()
                     ->searchable(),
                 TextColumn::make('created_at')
-                    ->label('Ngày tạo')
+                    ->label(fn (): string => __('tables.created_at'))
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('updated_at')
-                    ->label('Cập nhật lúc')
+                    ->label(fn (): string => __('tables.updated_at'))
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 SelectFilter::make('property')
-                    ->label('Bất động sản')
+                    ->label(fn (): string => __('tables.property'))
                     ->relationship('property', 'name', fn (Builder $query) => $query->where('landlord_id', auth()->id()))
                     ->searchable()
                     ->preload(),
-                TrashedFilter::make()->label('Đã xóa'),
+                TrashedFilter::make()->label(fn (): string => __('tables.trashed')),
             ])
             ->recordActions([
                 EditAction::make(),

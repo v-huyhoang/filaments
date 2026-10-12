@@ -12,10 +12,6 @@ enum TenantStatus: string implements HasLabel
 
     public function getLabel(): ?string
     {
-        return match ($this) {
-            self::Active => 'Đang hoạt động',
-            self::Inactive => 'Ngừng hoạt động',
-            self::Blacklisted => 'Danh sách hạn chế',
-        };
+        return __('statuses.tenant.'.$this->value);
     }
 }

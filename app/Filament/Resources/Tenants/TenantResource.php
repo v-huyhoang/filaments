@@ -22,9 +22,15 @@ class TenantResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedUserGroup;
 
-    protected static ?string $modelLabel = 'người thuê';
+    public static function getModelLabel(): string
+    {
+        return __('resources.tenant.label');
+    }
 
-    protected static ?string $pluralModelLabel = 'người thuê';
+    public static function getPluralModelLabel(): string
+    {
+        return __('resources.tenant.plural_label');
+    }
 
     protected static ?string $recordTitleAttribute = 'full_name';
 
