@@ -19,7 +19,11 @@ class RoomReservationResource extends Resource
 {
     protected static ?string $model = RoomReservation::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedBookmarkSquare;
+
+    protected static ?string $modelLabel = 'giữ chỗ';
+
+    protected static ?string $pluralModelLabel = 'giữ chỗ';
 
     public static function form(Schema $schema): Schema
     {

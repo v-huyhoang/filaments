@@ -31,11 +31,11 @@ class TerminateContractAction
                 ->first();
 
             if (! $lockedContract instanceof Contract) {
-                throw ValidationException::withMessages(['contract' => 'The selected contract is unavailable.']);
+                throw ValidationException::withMessages(['contract' => 'Hợp đồng đã chọn không khả dụng.']);
             }
 
             if ($lockedContract->status !== ContractStatus::Active) {
-                throw ValidationException::withMessages(['status' => 'Only active contracts can be terminated.']);
+                throw ValidationException::withMessages(['status' => 'Chỉ hợp đồng đang hiệu lực mới có thể chấm dứt.']);
             }
 
             $room = Room::query()->whereKey($lockedContract->room_id)->lockForUpdate()->firstOrFail();

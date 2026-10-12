@@ -45,7 +45,7 @@ class CreateRoomReservationAction
                 ->first();
 
             if (! $room instanceof Room) {
-                throw ValidationException::withMessages(['room_id' => 'The selected room is unavailable.']);
+                throw ValidationException::withMessages(['room_id' => 'Phòng đã chọn không khả dụng.']);
             }
 
             $tenantExists = Tenant::query()
@@ -54,15 +54,15 @@ class CreateRoomReservationAction
                 ->exists();
 
             if (! $tenantExists) {
-                throw ValidationException::withMessages(['tenant_id' => 'The selected tenant is unavailable.']);
+                throw ValidationException::withMessages(['tenant_id' => 'Người thuê đã chọn không khả dụng.']);
             }
 
             if (in_array($room->status, [RoomStatus::MAINTENANCE, RoomStatus::INACTIVE], true)) {
-                throw ValidationException::withMessages(['room_id' => 'Maintenance and inactive rooms cannot be reserved.']);
+                throw ValidationException::withMessages(['room_id' => 'Phòng đang bảo trì hoặc ngừng hoạt động không thể giữ chỗ.']);
             }
 
             if (RoomReservation::query()->liveHold()->where('room_id', $room->id)->exists()) {
-                throw ValidationException::withMessages(['room_id' => 'The room already has an active reservation.']);
+                throw ValidationException::withMessages(['room_id' => 'Phòng đã có giữ chỗ còn hiệu lực.']);
             }
 
             $hasCommittedContract = Contract::query()
@@ -74,7 +74,7 @@ class CreateRoomReservationAction
                 ->exists();
 
             if ($hasCommittedContract) {
-                throw ValidationException::withMessages(['expected_move_in_date' => 'The room is committed beyond the expected move-in date.']);
+                throw ValidationException::withMessages(['expected_move_in_date' => 'Phòng đã có hợp đồng vượt quá ngày dự kiến nhận phòng.']);
             }
 
             return RoomReservation::query()->create([

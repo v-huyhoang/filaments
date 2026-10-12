@@ -47,7 +47,7 @@ class CreateContractAction
                 ->first();
 
             if (! $room instanceof Room) {
-                throw ValidationException::withMessages(['room_id' => 'The selected room is unavailable.']);
+                throw ValidationException::withMessages(['room_id' => 'Phòng đã chọn không khả dụng.']);
             }
 
             $tenant = Tenant::query()
@@ -56,11 +56,11 @@ class CreateContractAction
                 ->first();
 
             if (! $tenant instanceof Tenant) {
-                throw ValidationException::withMessages(['tenant_id' => 'The selected tenant is unavailable.']);
+                throw ValidationException::withMessages(['tenant_id' => 'Người thuê đã chọn không khả dụng.']);
             }
 
             if ($reservation instanceof RoomReservation && ($reservation->room_id !== $room->id || $reservation->tenant_id !== $tenant->id)) {
-                throw ValidationException::withMessages(['room_id' => 'The reservation does not match the selected room and tenant.']);
+                throw ValidationException::withMessages(['room_id' => 'Thông tin giữ chỗ không khớp với phòng và người thuê đã chọn.']);
             }
 
             if ($status === ContractStatus::Scheduled) {
@@ -82,7 +82,7 @@ class CreateContractAction
     private function ensureRoomCanBeCommitted(Room $room, array $attributes, ?RoomReservation $reservation): void
     {
         if (in_array($room->status, [RoomStatus::MAINTENANCE, RoomStatus::INACTIVE], true)) {
-            throw ValidationException::withMessages(['room_id' => 'Maintenance and inactive rooms cannot receive a contract.']);
+            throw ValidationException::withMessages(['room_id' => 'Phòng đang bảo trì hoặc ngừng hoạt động không thể tạo hợp đồng.']);
         }
 
         $hasOverlap = Contract::query()
@@ -95,7 +95,7 @@ class CreateContractAction
             ->exists();
 
         if ($hasOverlap) {
-            throw ValidationException::withMessages(['start_date' => 'The room already has a committed contract during this period.']);
+            throw ValidationException::withMessages(['start_date' => 'Phòng đã có hợp đồng trong khoảng thời gian này.']);
         }
 
         $hasAnotherLiveReservation = RoomReservation::query()
@@ -105,7 +105,7 @@ class CreateContractAction
             ->exists();
 
         if ($hasAnotherLiveReservation) {
-            throw ValidationException::withMessages(['room_id' => 'The room currently has an active reservation.']);
+            throw ValidationException::withMessages(['room_id' => 'Phòng hiện có giữ chỗ còn hiệu lực.']);
         }
     }
 }

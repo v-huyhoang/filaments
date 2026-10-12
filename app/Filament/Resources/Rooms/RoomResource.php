@@ -20,7 +20,11 @@ class RoomResource extends Resource
 {
     protected static ?string $model = Room::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedHome;
+
+    protected static ?string $modelLabel = 'phòng';
+
+    protected static ?string $pluralModelLabel = 'phòng';
 
     protected static ?string $recordTitleAttribute = 'room_number';
 

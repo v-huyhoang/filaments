@@ -14,14 +14,18 @@ class PropertyForm
         return $schema
             ->components([
                 TextInput::make('name')
+                    ->label('Tên bất động sản')
                     ->required(),
                 TextInput::make('address')
+                    ->label('Địa chỉ')
                     ->required(),
                 Textarea::make('description')
+                    ->label('Mô tả')
                     ->columnSpanFull(),
                 Toggle::make('is_active')
+                    ->label('Đang hoạt động')
                     ->inline(false)
                     ->default(true),
-            ]); 
+            ]);
     }
 }

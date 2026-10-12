@@ -22,6 +22,10 @@ class TenantResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedUserGroup;
 
+    protected static ?string $modelLabel = 'người thuê';
+
+    protected static ?string $pluralModelLabel = 'người thuê';
+
     protected static ?string $recordTitleAttribute = 'full_name';
 
     public static function form(Schema $schema): Schema

@@ -19,28 +19,35 @@ class TenantsTable
         return $table
             ->columns([
                 TextColumn::make('full_name')
+                    ->label('Họ và tên')
                     ->searchable()
                     ->sortable(),
                 TextColumn::make('phone')
+                    ->label('Số điện thoại')
                     ->searchable(),
                 TextColumn::make('email')
+                    ->label('Email')
                     ->searchable(),
                 TextColumn::make('status')
+                    ->label('Trạng thái')
                     ->badge()
                     ->sortable(),
                 TextColumn::make('created_at')
+                    ->label('Ngày tạo')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('updated_at')
+                    ->label('Cập nhật lúc')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 SelectFilter::make('status')
+                    ->label('Trạng thái')
                     ->options(TenantStatus::class),
-                TrashedFilter::make(),
+                TrashedFilter::make()->label('Đã xóa'),
             ])
             ->recordActions([
                 EditAction::make(),

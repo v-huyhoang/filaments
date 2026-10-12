@@ -26,21 +26,21 @@ class ActivateContractAction
                 ->first();
 
             if (! $lockedContract instanceof Contract) {
-                throw ValidationException::withMessages(['contract' => 'The selected contract is unavailable.']);
+                throw ValidationException::withMessages(['contract' => 'Hợp đồng đã chọn không khả dụng.']);
             }
 
             if ($lockedContract->status !== ContractStatus::Scheduled) {
-                throw ValidationException::withMessages(['status' => 'Only scheduled contracts can be activated.']);
+                throw ValidationException::withMessages(['status' => 'Chỉ hợp đồng đã lên lịch mới có thể kích hoạt.']);
             }
 
             if ($lockedContract->start_date->isFuture() || $lockedContract->end_date?->isPast()) {
-                throw ValidationException::withMessages(['start_date' => 'The contract is outside of its active period.']);
+                throw ValidationException::withMessages(['start_date' => 'Hợp đồng nằm ngoài thời hạn hiệu lực.']);
             }
 
             $room = Room::query()->whereKey($lockedContract->room_id)->lockForUpdate()->firstOrFail();
 
             if (in_array($room->status, [RoomStatus::MAINTENANCE, RoomStatus::INACTIVE], true)) {
-                throw ValidationException::withMessages(['room_id' => 'Maintenance and inactive rooms cannot receive an active contract.']);
+                throw ValidationException::withMessages(['room_id' => 'Phòng đang bảo trì hoặc ngừng hoạt động không thể kích hoạt hợp đồng.']);
             }
 
             $lockedContract->update([

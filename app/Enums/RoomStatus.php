@@ -2,20 +2,22 @@
 
 namespace App\Enums;
 
-enum RoomStatus: string
+use Filament\Support\Contracts\HasLabel;
+
+enum RoomStatus: string implements HasLabel
 {
     case AVAILABLE = 'available';
     case OCCUPIED = 'occupied';
     case MAINTENANCE = 'maintenance';
     case INACTIVE = 'inactive';
 
-    // public function label(): string
-    // {
-    //     return match($this) {
-    //         self::AVAILABLE => 'Bản nháp',
-    //         self::OCCUPIED => 'Chờ duyệt',
-    //         self::MAINTENANCE => 'Đã xuất bản',
-    //         self::INACTIVE => 'Đã lưu trữ',
-    //     };
-    // }
+    public function getLabel(): ?string
+    {
+        return match ($this) {
+            self::AVAILABLE => 'Còn trống',
+            self::OCCUPIED => 'Đang có người thuê',
+            self::MAINTENANCE => 'Bảo trì',
+            self::INACTIVE => 'Ngừng hoạt động',
+        };
+    }
 }

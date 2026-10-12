@@ -20,9 +20,13 @@ class PropertyResource extends Resource
 {
     protected static ?string $model = Property::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedBuildingOffice2;
 
-    protected static ?string $recordTitleAttribute = 'Property';
+    protected static ?string $modelLabel = 'bất động sản';
+
+    protected static ?string $pluralModelLabel = 'bất động sản';
+
+    protected static ?string $recordTitleAttribute = 'name';
 
     public static function form(Schema $schema): Schema
     {

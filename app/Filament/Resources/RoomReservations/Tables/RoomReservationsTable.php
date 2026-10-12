@@ -19,32 +19,32 @@ class RoomReservationsTable
     {
         return $table
             ->columns([
-                TextColumn::make('room.property.name')->label('Property')->searchable(),
-                TextColumn::make('room.room_number')->label('Room')->searchable(),
-                TextColumn::make('tenant.full_name')->label('Tenant')->searchable(),
-                TextColumn::make('expected_move_in_date')->date()->sortable(),
-                TextColumn::make('hold_amount')->money('VND')->sortable(),
-                TextColumn::make('paid_at')->dateTime()->sortable(),
-                TextColumn::make('expires_at')->dateTime()->sortable(),
-                TextColumn::make('status')->badge(),
+                TextColumn::make('room.property.name')->label('Bất động sản')->searchable(),
+                TextColumn::make('room.room_number')->label('Phòng')->searchable(),
+                TextColumn::make('tenant.full_name')->label('Người thuê')->searchable(),
+                TextColumn::make('expected_move_in_date')->label('Ngày dự kiến nhận phòng')->date()->sortable(),
+                TextColumn::make('hold_amount')->label('Tiền giữ chỗ')->money('VND')->sortable(),
+                TextColumn::make('paid_at')->label('Thời điểm thanh toán')->dateTime()->sortable(),
+                TextColumn::make('expires_at')->label('Thời hạn giữ chỗ')->dateTime()->sortable(),
+                TextColumn::make('status')->label('Trạng thái')->badge(),
             ])
             ->filters([
-                SelectFilter::make('status')->options([
-                    RoomReservationStatus::Held->value => 'Held',
-                    RoomReservationStatus::Cancelled->value => 'Cancelled',
-                    RoomReservationStatus::Expired->value => 'Expired',
-                    RoomReservationStatus::Converted->value => 'Converted',
+                SelectFilter::make('status')->label('Trạng thái')->options([
+                    RoomReservationStatus::Held->value => 'Đang giữ chỗ',
+                    RoomReservationStatus::Cancelled->value => 'Đã hủy',
+                    RoomReservationStatus::Expired->value => 'Đã hết hạn',
+                    RoomReservationStatus::Converted->value => 'Đã chuyển thành hợp đồng',
                 ]),
             ])
             ->recordActions([
                 Action::make('convertToContract')
-                    ->label('Convert to contract')
+                    ->label('Chuyển thành hợp đồng')
                     ->schema([
-                        DatePicker::make('end_date'),
-                        TextInput::make('rent_amount')->numeric()->minValue(0)->required(),
-                        TextInput::make('deposit_amount')->numeric()->minValue(0)->default(0)->required(),
-                        TextInput::make('payment_due_day')->numeric()->minValue(1)->maxValue(28)->required(),
-                        TextInput::make('notes'),
+                        DatePicker::make('end_date')->label('Ngày kết thúc'),
+                        TextInput::make('rent_amount')->label('Giá thuê')->numeric()->minValue(0)->required(),
+                        TextInput::make('deposit_amount')->label('Tiền cọc')->numeric()->minValue(0)->default(0)->required(),
+                        TextInput::make('payment_due_day')->label('Ngày đến hạn thanh toán')->numeric()->minValue(1)->maxValue(28)->required(),
+                        TextInput::make('notes')->label('Ghi chú'),
                     ])
                     ->visible(fn (RoomReservation $record): bool => $record->status === RoomReservationStatus::Held && $record->expires_at->isFuture())
                     ->action(function (RoomReservation $record, array $data): void {

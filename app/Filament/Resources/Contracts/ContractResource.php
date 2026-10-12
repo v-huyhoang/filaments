@@ -19,7 +19,11 @@ class ContractResource extends Resource
 {
     protected static ?string $model = Contract::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedDocumentText;
+
+    protected static ?string $modelLabel = 'hợp đồng';
+
+    protected static ?string $pluralModelLabel = 'hợp đồng';
 
     public static function form(Schema $schema): Schema
     {

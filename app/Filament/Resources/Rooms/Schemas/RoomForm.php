@@ -19,6 +19,7 @@ class RoomForm
         return $schema
             ->components([
                 Select::make('property_id')
+                    ->label('Bất động sản')
                     ->relationship(
                         name: 'property',
                         titleAttribute: 'name',
@@ -33,6 +34,7 @@ class RoomForm
                     ->preload()
                     ->required(),
                 TextInput::make('room_number')
+                    ->label('Số phòng')
                     ->unique(
                         table: 'rooms',
                         column: 'room_number',
@@ -41,33 +43,40 @@ class RoomForm
                     )
                     ->required(),
                 TextInput::make('floor')
+                    ->label('Tầng')
                     ->required()
                     ->numeric()
                     ->minValue(1)
                     ->default(1),
                 TextInput::make('area')
+                    ->label('Diện tích (m²)')
                     ->numeric()
                     ->minValue(0),
                 TextInput::make('base_rent')
+                    ->label('Giá thuê cơ bản')
                     ->required()
                     ->numeric()
                     ->minValue(0)
                     ->default(0.0),
                 TextInput::make('deposit_amount')
+                    ->label('Tiền cọc')
                     ->required()
                     ->numeric()
                     ->minValue(0)
                     ->default(0.0),
                 TextInput::make('max_occupants')
+                    ->label('Số người ở tối đa')
                     ->required()
                     ->numeric()
                     ->minValue(1)
                     ->default(1),
                 Select::make('status')
+                    ->label('Trạng thái')
                     ->options(RoomStatus::class)
                     ->default('available')
                     ->required(),
                 Textarea::make('description')
+                    ->label('Mô tả')
                     ->columnSpanFull(),
             ]);
     }
