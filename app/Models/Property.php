@@ -33,8 +33,8 @@ class Property extends Model
         return $this->belongsTo(User::class, 'landlord_id');
     }
 
-     public function rooms(): HasMany
+    public function rooms(): HasMany
     {
-        return $this->hasMany(User::class, 'landlord_id');
+        return $this->hasMany(Room::class);
     }
 }

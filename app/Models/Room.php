@@ -6,6 +6,7 @@ use App\Enums\RoomStatus;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Room extends Model
@@ -22,7 +23,7 @@ class Room extends Model
         'deposit_amount',
         'max_occupants',
         'status',
-        'description'
+        'description',
     ];
 
     protected function casts(): array
@@ -35,5 +36,15 @@ class Room extends Model
     public function property(): BelongsTo
     {
         return $this->belongsTo(Property::class, 'property_id');
+    }
+
+    public function contracts(): HasMany
+    {
+        return $this->hasMany(Contract::class);
+    }
+
+    public function reservations(): HasMany
+    {
+        return $this->hasMany(RoomReservation::class);
     }
 }

@@ -50,11 +50,18 @@ class RoomResource extends Resource
         ];
     }
 
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()
+            ->whereHas('property', fn (Builder $query) => $query->where('landlord_id', auth()->id()));
+    }
+
     public static function getRecordRouteBindingEloquentQuery(): Builder
     {
         return parent::getRecordRouteBindingEloquentQuery()
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
-            ]);
+            ])
+            ->whereHas('property', fn (Builder $query) => $query->where('landlord_id', auth()->id()));
     }
 }
