@@ -1,0 +1,26 @@
+<?php
+
+return [
+    'missing_period' => 'Đang thiếu kỳ ghi số. Hãy bổ sung từng tháng còn thiếu; không gộp âm thầm nhiều tháng vào một kỳ.',
+    'close_previous_contract' => 'Cần trả phòng cho hợp đồng đang ở trước khi nhận khách mới.',
+    'invalid_termination' => 'Ngày trả phòng không được trước ngày bắt đầu hợp đồng hoặc trong tương lai.',
+    'reading_locked' => 'Chỉ được sửa lần ghi mới nhất. Cần hủy mọi hóa đơn đang tham chiếu trước khi sửa; dữ liệu chốt của hóa đơn cũ không thay đổi.',
+    'correct_reading' => 'Sửa chỉ số',
+    'correction_history' => 'Lịch sử sửa chỉ số',
+    'before_correction' => 'Chỉ số trước sửa',
+    'after_correction' => 'Chỉ số sau sửa',
+    'bill_contract' => 'Lập hóa đơn',
+    'reason' => 'Lý do',
+    'service_effective_help' => 'Đổi trạng thái có hiệu lực từ hôm nay. Kỳ cũ giữ trạng thái có hiệu lực tại kỳ đó. Dùng cấu hình dịch vụ của nhà để đặt thay đổi theo ngày.',
+    'room_history_locked' => 'Không thể chuyển phòng đã có hợp đồng, giữ chỗ hoặc chỉ số sang nhà khác.',
+    'room_status_managed' => 'Trạng thái đang ở được quản lý qua nhận phòng và trả phòng. Cần trả phòng hợp đồng đang ở trước khi đổi tình trạng phòng.',
+    'invalid_replacement' => 'Chọn hóa đơn đã hủy mới nhất của đúng hợp đồng và kỳ thu.',
+    'preview_changed' => 'Dữ liệu tính tiền đã thay đổi. Hãy xem trước lại trước khi phát hành.',
+    'preview_invoice' => 'Xem trước hóa đơn',
+    'issue_invoice' => 'Xác nhận phát hành hóa đơn',
+    'billing_policy' => 'Quy tắc tính tiền',
+    'replace_invoice' => 'Lập hóa đơn thay thế',
+    'revision' => 'Lần phát hành',
+    'replaces_number' => 'Thay thế hóa đơn số',
+    'end_contract_help' => 'Trả phòng giải phóng phòng ngay. Sau đó vẫn có thể lập hóa đơn kỳ cuối và các tháng thuê cũ chưa lập. Tiền phòng tính nguyên tháng có thời gian thuê.',
+];

@@ -43,9 +43,12 @@ notes
 - usage = current - previous
 - one reading per room/service/billing period
 - previous reading should normally equal prior period's current reading
+- after the first reading, require consecutive billing months; reject missing months instead of assigning multi-month usage to one month
 - `recorded_by` is server-controlled
 - a reading referenced by an issued invoice must not be silently changed
-- manual correction after invoicing requires explicit future adjustment workflow
+- correction after invoicing must be explicit, audited and preceded by cancellation; active invoice inputs cannot be silently changed
+- correction is an explicit authorized Action with a mandatory reason and before/after audit history; only the latest reading can be corrected, and all referencing invoices must first be cancelled
+- cancelled invoice snapshots are not rewritten by a reading correction; issue an explicitly linked replacement invoice afterwards
 
 Database constraint:
 

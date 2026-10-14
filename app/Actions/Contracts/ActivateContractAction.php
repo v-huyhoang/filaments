@@ -26,21 +26,25 @@ class ActivateContractAction
                 ->first();
 
             if (! $lockedContract instanceof Contract) {
-                throw ValidationException::withMessages(['contract' => 'Hợp đồng đã chọn không khả dụng.']);
+                throw ValidationException::withMessages(['contract' => __('messages.contract_unavailable')]);
             }
 
             if ($lockedContract->status !== ContractStatus::Scheduled) {
-                throw ValidationException::withMessages(['status' => 'Chỉ hợp đồng đã lên lịch mới có thể kích hoạt.']);
+                throw ValidationException::withMessages(['status' => __('messages.only_scheduled_activate')]);
             }
 
-            if ($lockedContract->start_date->isFuture() || $lockedContract->end_date?->isPast()) {
-                throw ValidationException::withMessages(['start_date' => 'Hợp đồng nằm ngoài thời hạn hiệu lực.']);
+            if ($lockedContract->start_date->greaterThan(today()) || $lockedContract->end_date?->lessThan(today())) {
+                throw ValidationException::withMessages(['start_date' => __('messages.contract_outside_dates')]);
             }
 
             $room = Room::query()->whereKey($lockedContract->room_id)->lockForUpdate()->firstOrFail();
 
+            if (Contract::query()->where('room_id', $room->id)->whereKeyNot($lockedContract->id)->where('status', ContractStatus::Active)->lockForUpdate()->first(['id']) !== null) {
+                throw ValidationException::withMessages(['room_id' => __('workflow.close_previous_contract')]);
+            }
+
             if (in_array($room->status, [RoomStatus::MAINTENANCE, RoomStatus::INACTIVE], true)) {
-                throw ValidationException::withMessages(['room_id' => 'Phòng đang bảo trì hoặc ngừng hoạt động không thể kích hoạt hợp đồng.']);
+                throw ValidationException::withMessages(['room_id' => __('messages.room_cannot_activate')]);
             }
 
             $lockedContract->update([
@@ -51,6 +55,6 @@ class ActivateContractAction
             $room->update(['status' => RoomStatus::OCCUPIED]);
 
             return $lockedContract->refresh();
-        });
+        }, attempts: 3);
     }
 }

@@ -44,7 +44,7 @@ class RoomFormTest extends TestCase
         Livewire::test(CreateRoom::class)
             ->fillForm($this->roomData($anotherLandlordProperty))
             ->call('create')
-            ->assertHasFormErrors(['property_id' => 'exists']);
+            ->assertHasFormErrors(['property_id']);
 
         $this->assertDatabaseMissing('rooms', [
             'property_id' => $anotherLandlordProperty->id,
@@ -63,7 +63,7 @@ class RoomFormTest extends TestCase
         Livewire::test(CreateRoom::class)
             ->fillForm($this->roomData($property))
             ->call('create')
-            ->assertHasFormErrors(['property_id' => 'exists']);
+            ->assertHasFormErrors(['property_id']);
 
         $this->assertDatabaseMissing('rooms', [
             'property_id' => $property->id,

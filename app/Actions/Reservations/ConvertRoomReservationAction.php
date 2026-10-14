@@ -30,11 +30,11 @@ class ConvertRoomReservationAction
                 ->first();
 
             if (! $lockedReservation instanceof RoomReservation) {
-                throw ValidationException::withMessages(['reservation' => 'Thông tin giữ chỗ đã chọn không khả dụng.']);
+                throw ValidationException::withMessages(['reservation' => __('messages.reservation_unavailable')]);
             }
 
             if ($lockedReservation->status !== RoomReservationStatus::Held || $lockedReservation->expires_at->isPast()) {
-                throw ValidationException::withMessages(['status' => 'Chỉ giữ chỗ còn hạn mới có thể chuyển thành hợp đồng.']);
+                throw ValidationException::withMessages(['status' => __('messages.only_live_convert')]);
             }
 
             $contract = app(CreateContractAction::class)->handle($landlord, [

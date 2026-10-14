@@ -2,6 +2,7 @@
 
 namespace App\Policies;
 
+use App\Enums\ContractStatus;
 use App\Models\Contract;
 use App\Models\User;
 
@@ -25,6 +26,11 @@ class ContractPolicy
     public function update(User $user, Contract $contract): bool
     {
         return $this->ownsContract($user, $contract);
+    }
+
+    public function editDraft(User $user, Contract $contract): bool
+    {
+        return $this->ownsContract($user, $contract) && $contract->status === ContractStatus::Draft;
     }
 
     public function delete(User $user, Contract $contract): bool

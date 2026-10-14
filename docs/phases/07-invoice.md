@@ -72,14 +72,16 @@ cancelled
 - total = sum(invoice items)
 - invoice items are snapshots
 - issued invoice must not be recalculated silently after source prices change
-- duplicate invoice for same contract/billing period is forbidden
+- duplicate live invoice for the same contract/billing period is forbidden; cancelled revisions may only be replaced explicitly
 - cancelled invoice remains historical rather than being hard-deleted
 - invoice generation is an application Action
 
 Recommended business uniqueness:
 
 ```text
-UNIQUE(contract_id, billing_period)
+UNIQUE(contract_id, billing_period, revision)
+UNIQUE(contract_id, billing_period, active_billing_key)
+UNIQUE(replaces_invoice_id)
 ```
 
 ---
@@ -109,7 +111,7 @@ rollback all changes
 
 ## Idempotency
 
-Calling invoice generation twice for the same contract/billing period must not create two invoices.
+Calling invoice generation twice for the same contract/billing period must not create two live invoices. Cancelled revisions remain immutable. Explicit replacement requires the latest cancelled invoice ID and a reason. The generated active_billing_key is NULL for cancelled invoices and 1 otherwise.
 
 Database uniqueness is required in addition to pre-check logic.
 
@@ -196,3 +198,17 @@ Changing room/service configuration later does not alter the issued invoice.
 - Discounts
 - Late fees
 - Batch scheduler
+
+## Implementation Decisions
+
+- Preview does not write records. The UI requires a second confirmation with unchanged inputs; issue validates the reviewed fingerprint again under transaction locks. Draft remains an internal transactional state while items are inserted.
+- Bill the full contract rent for an overlapping billing month; daily proration is not supported.
+- Resolve service pricing at the end of the billing month, matching meter-reading eligibility.
+- Require an explicit actual occupant count for per-person fees, bounded by room capacity; never assume capacity equals occupancy.
+- Manual services are not automatically billed; manual line-item entry is not supported in this phase.
+- Round each line to two decimal places using half-up rounding, then sum the rounded lines.
+- Store landlord ownership and tenant/property/room labels as invoice snapshots so historical access survives soft-deleted source records.
+- Issued financial fields and line items cannot be edited or deleted through model operations. Cancellation preserves all snapshots; an explicitly linked new revision can replace the latest cancelled invoice with a mandatory reason.
+- Active contracts and checked-out/expired contracts can bill overlapping actual tenancy months. Check-out bounds the final billable month, even when the original end date is later.
+- Service status is effective-dated, so deactivation today does not remove services from earlier unbilled months.
+- Use contract/property/room row locks, revision uniqueness and the generated active-period key to prevent duplicate live invoices; no scheduler or batch generation is included.

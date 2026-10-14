@@ -31,4 +31,14 @@ class ContractFactory extends Factory
             'status' => ContractStatus::Draft,
         ];
     }
+
+    public function active(): static
+    {
+        return $this->state(fn (): array => [
+            'tenant_id' => fn (array $attributes): int => Tenant::factory()->create(['landlord_id' => Room::query()->findOrFail($attributes['room_id'])->property->landlord_id])->id,
+            'status' => ContractStatus::Active,
+            'start_date' => today()->startOfMonth(),
+            'end_date' => today()->addYear(),
+        ]);
+    }
 }

@@ -19,7 +19,7 @@ class ContractForm
         return $schema
             ->components([
                 Select::make('room_id')
-                    ->label('Phòng')
+                    ->label(fn (): string => __('forms.room'))
                     ->relationship(
                         name: 'room',
                         titleAttribute: 'room_number',
@@ -32,7 +32,7 @@ class ContractForm
                     ->preload()
                     ->required(),
                 Select::make('tenant_id')
-                    ->label('Người thuê')
+                    ->label(fn (): string => __('forms.tenant'))
                     ->relationship(
                         name: 'tenant',
                         titleAttribute: 'full_name',
@@ -42,20 +42,20 @@ class ContractForm
                     ->searchable()
                     ->preload()
                     ->required(),
-                DatePicker::make('start_date')->label('Ngày bắt đầu')->required(),
-                DatePicker::make('end_date')->label('Ngày kết thúc')->afterOrEqual('start_date'),
-                TextInput::make('rent_amount')->label('Giá thuê')->numeric()->minValue(0)->required(),
-                TextInput::make('deposit_amount')->label('Tiền cọc')->numeric()->minValue(0)->default(0)->required(),
-                TextInput::make('payment_due_day')->label('Ngày đến hạn thanh toán')->numeric()->minValue(1)->maxValue(28)->required(),
+                DatePicker::make('start_date')->label(fn (): string => __('forms.start_date'))->required(),
+                DatePicker::make('end_date')->label(fn (): string => __('forms.end_date'))->afterOrEqual('start_date'),
+                TextInput::make('rent_amount')->label(fn (): string => __('forms.rent_amount'))->numeric()->minValue(0)->required(),
+                TextInput::make('deposit_amount')->label(fn (): string => __('forms.deposit_amount'))->numeric()->minValue(0)->default(0)->required(),
+                TextInput::make('payment_due_day')->label(fn (): string => __('forms.payment_due_day'))->numeric()->minValue(1)->maxValue(28)->required(),
                 Select::make('status')
-                    ->label('Trạng thái')
-                    ->options([
-                        ContractStatus::Draft->value => 'Bản nháp',
-                        ContractStatus::Scheduled->value => 'Đã lên lịch',
+                    ->label(fn (): string => __('forms.status'))
+                    ->options(fn (): array => [
+                        ContractStatus::Draft->value => ContractStatus::Draft->getLabel(),
+                        ContractStatus::Scheduled->value => ContractStatus::Scheduled->getLabel(),
                     ])
                     ->default(ContractStatus::Scheduled->value)
                     ->required(),
-                Textarea::make('notes')->label('Ghi chú')->columnSpanFull(),
+                Textarea::make('notes')->label(fn (): string => __('forms.notes'))->columnSpanFull(),
             ]);
     }
 }

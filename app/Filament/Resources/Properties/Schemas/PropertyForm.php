@@ -14,16 +14,16 @@ class PropertyForm
         return $schema
             ->components([
                 TextInput::make('name')
-                    ->label('Tên bất động sản')
+                    ->label(fn (): string => __('forms.property_name'))
                     ->required(),
                 TextInput::make('address')
-                    ->label('Địa chỉ')
+                    ->label(fn (): string => __('forms.address'))
                     ->required(),
                 Textarea::make('description')
-                    ->label('Mô tả')
+                    ->label(fn (): string => __('forms.description'))
                     ->columnSpanFull(),
                 Toggle::make('is_active')
-                    ->label('Đang hoạt động')
+                    ->label(fn (): string => __('forms.active'))
                     ->inline(false)
                     ->default(true),
             ]);

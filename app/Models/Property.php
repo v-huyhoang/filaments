@@ -14,6 +14,8 @@ class Property extends Model
     /** @use HasFactory<PropertyFactory> */
     use HasFactory, SoftDeletes;
 
+    protected $attributes = ['is_active' => true];
+
     protected $fillable = [
         'name',
         'address',
@@ -36,5 +38,10 @@ class Property extends Model
     public function rooms(): HasMany
     {
         return $this->hasMany(Room::class);
+    }
+
+    public function propertyServices(): HasMany
+    {
+        return $this->hasMany(PropertyService::class);
     }
 }

@@ -19,7 +19,7 @@ class RoomReservationForm
         return $schema
             ->components([
                 Select::make('room_id')
-                    ->label('Phòng')
+                    ->label(fn (): string => __('forms.room'))
                     ->relationship(
                         name: 'room',
                         titleAttribute: 'room_number',
@@ -32,7 +32,7 @@ class RoomReservationForm
                     ->preload()
                     ->required(),
                 Select::make('tenant_id')
-                    ->label('Người thuê')
+                    ->label(fn (): string => __('forms.tenant'))
                     ->relationship(
                         name: 'tenant',
                         titleAttribute: 'full_name',
@@ -42,13 +42,13 @@ class RoomReservationForm
                     ->searchable()
                     ->preload()
                     ->required(),
-                DatePicker::make('expected_move_in_date')->label('Ngày dự kiến nhận phòng')->minDate(today())->required(),
-                TextInput::make('hold_amount')->label('Tiền giữ chỗ')->numeric()->minValue(1)->required(),
-                DateTimePicker::make('paid_at')->label('Thời điểm thanh toán')->default(now())->required(),
-                TextInput::make('payment_method')->label('Phương thức thanh toán')->maxLength(50)->required(),
-                TextInput::make('payment_reference')->label('Mã tham chiếu thanh toán')->maxLength(255),
-                DateTimePicker::make('expires_at')->label('Thời hạn giữ chỗ')->after('paid_at')->minDate(now())->required(),
-                Textarea::make('notes')->label('Ghi chú')->columnSpanFull(),
+                DatePicker::make('expected_move_in_date')->label(fn (): string => __('forms.expected_move_in_date'))->minDate(today())->required(),
+                TextInput::make('hold_amount')->label(fn (): string => __('forms.hold_amount'))->numeric()->minValue(1)->required(),
+                DateTimePicker::make('paid_at')->label(fn (): string => __('forms.paid_at'))->default(now())->required(),
+                TextInput::make('payment_method')->label(fn (): string => __('forms.payment_method'))->maxLength(50)->required(),
+                TextInput::make('payment_reference')->label(fn (): string => __('forms.payment_reference'))->maxLength(255),
+                DateTimePicker::make('expires_at')->label(fn (): string => __('forms.expires_at'))->after('paid_at')->minDate(now())->required(),
+                Textarea::make('notes')->label(fn (): string => __('forms.notes'))->columnSpanFull(),
             ]);
     }
 }

@@ -2,7 +2,9 @@
 
 namespace App\Filament\Resources\Rooms\Schemas;
 
+use App\Enums\ContractStatus;
 use App\Enums\RoomStatus;
+use App\Models\Room;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
@@ -19,7 +21,7 @@ class RoomForm
         return $schema
             ->components([
                 Select::make('property_id')
-                    ->label('Bất động sản')
+                    ->label(fn (): string => __('forms.property'))
                     ->relationship(
                         name: 'property',
                         titleAttribute: 'name',
@@ -34,7 +36,7 @@ class RoomForm
                     ->preload()
                     ->required(),
                 TextInput::make('room_number')
-                    ->label('Số phòng')
+                    ->label(fn (): string => __('forms.room_number'))
                     ->unique(
                         table: 'rooms',
                         column: 'room_number',
@@ -43,40 +45,43 @@ class RoomForm
                     )
                     ->required(),
                 TextInput::make('floor')
-                    ->label('Tầng')
+                    ->label(fn (): string => __('forms.floor'))
                     ->required()
                     ->numeric()
                     ->minValue(1)
                     ->default(1),
                 TextInput::make('area')
-                    ->label('Diện tích (m²)')
+                    ->label(fn (): string => __('forms.area'))
                     ->numeric()
                     ->minValue(0),
                 TextInput::make('base_rent')
-                    ->label('Giá thuê cơ bản')
+                    ->label(fn (): string => __('forms.base_rent'))
                     ->required()
                     ->numeric()
                     ->minValue(0)
                     ->default(0.0),
                 TextInput::make('deposit_amount')
-                    ->label('Tiền cọc')
+                    ->label(fn (): string => __('forms.deposit_amount'))
                     ->required()
                     ->numeric()
                     ->minValue(0)
                     ->default(0.0),
                 TextInput::make('max_occupants')
-                    ->label('Số người ở tối đa')
+                    ->label(fn (): string => __('forms.max_occupants'))
                     ->required()
                     ->numeric()
                     ->minValue(1)
                     ->default(1),
                 Select::make('status')
-                    ->label('Trạng thái')
-                    ->options(RoomStatus::class)
+                    ->label(fn (): string => __('forms.status'))
+                    ->options(fn (?Room $record): array => $record?->contracts()->where('status', ContractStatus::Active)->exists()
+                        ? [RoomStatus::OCCUPIED->value => RoomStatus::OCCUPIED->getLabel()]
+                        : collect(RoomStatus::cases())->reject(fn (RoomStatus $status): bool => $status === RoomStatus::OCCUPIED)->mapWithKeys(fn (RoomStatus $status): array => [$status->value => $status->getLabel()])->all())
+                    ->helperText(fn (): string => __('workflow.room_status_managed'))
                     ->default('available')
                     ->required(),
                 Textarea::make('description')
-                    ->label('Mô tả')
+                    ->label(fn (): string => __('forms.description'))
                     ->columnSpanFull(),
             ]);
     }

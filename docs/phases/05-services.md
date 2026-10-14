@@ -72,6 +72,7 @@ manual
 - current price change affects future billing only
 - historical invoices must store their own snapshots
 - disabled services must not be automatically billed
+- service status changes are dated from today and preserve earlier billing eligibility; resolve status at the billing month's end rather than filtering only the current master flag
 - only valid property/service combinations may be configured
 
 ---

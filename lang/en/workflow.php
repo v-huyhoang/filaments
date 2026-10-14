@@ -1,0 +1,26 @@
+<?php
+
+return [
+    'missing_period' => 'A billing month is missing. Record every intervening month before this reading; usage cannot silently span multiple months.',
+    'close_previous_contract' => 'Check out the previous active contract before checking in this tenant.',
+    'invalid_termination' => 'Check-out cannot be before the contract start date or in the future.',
+    'reading_locked' => 'Only the latest reading can be corrected. Cancel every referencing invoice first; historical invoice snapshots remain unchanged.',
+    'correct_reading' => 'Correct reading',
+    'correction_history' => 'Correction history',
+    'before_correction' => 'Before correction',
+    'after_correction' => 'After correction',
+    'bill_contract' => 'Create invoice',
+    'reason' => 'Reason',
+    'service_effective_help' => 'Status changes take effect today. Earlier billing periods retain their effective status. Use property-service pricing to schedule changes.',
+    'room_history_locked' => 'A room with contracts, reservations or readings cannot be moved to another property.',
+    'room_status_managed' => 'Occupancy is controlled by check-in and check-out. Check out active contracts before changing room availability.',
+    'invalid_replacement' => 'Select the latest cancelled invoice for this contract and billing month.',
+    'preview_changed' => 'Billing inputs changed. Preview the invoice again before issuing it.',
+    'preview_invoice' => 'Preview invoice',
+    'issue_invoice' => 'Confirm and issue invoice',
+    'billing_policy' => 'Billing policy',
+    'replace_invoice' => 'Create replacement invoice',
+    'revision' => 'Revision',
+    'replaces_number' => 'Replaces invoice number',
+    'end_contract_help' => 'Check-out releases the room immediately. Final invoices and earlier unbilled months can still be generated afterwards. Rent is billed for the full overlapping month.',
+];

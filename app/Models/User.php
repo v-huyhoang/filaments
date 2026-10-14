@@ -40,4 +40,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(Tenant::class, 'landlord_id');
     }
+
+    public function services(): HasMany
+    {
+        return $this->hasMany(Service::class, 'landlord_id');
+    }
 }

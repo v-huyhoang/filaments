@@ -7,6 +7,7 @@ use App\Enums\RoomStatus;
 use App\Models\Contract;
 use App\Models\Room;
 use App\Models\User;
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
@@ -20,7 +21,7 @@ class TerminateContractAction
         Gate::forUser($landlord)->authorize('update', $contract);
 
         $validated = Validator::make(['terminated_at' => $terminatedAt], [
-            'terminated_at' => ['nullable', 'date'],
+            'terminated_at' => ['nullable', 'date', 'before_or_equal:now'],
         ])->validate();
 
         return DB::transaction(function () use ($contract, $landlord, $validated): Contract {
@@ -31,30 +32,35 @@ class TerminateContractAction
                 ->first();
 
             if (! $lockedContract instanceof Contract) {
-                throw ValidationException::withMessages(['contract' => 'Hợp đồng đã chọn không khả dụng.']);
+                throw ValidationException::withMessages(['contract' => __('messages.contract_unavailable')]);
             }
 
             if ($lockedContract->status !== ContractStatus::Active) {
-                throw ValidationException::withMessages(['status' => 'Chỉ hợp đồng đang hiệu lực mới có thể chấm dứt.']);
+                throw ValidationException::withMessages(['status' => __('messages.only_active_terminate')]);
+            }
+
+            $termination = isset($validated['terminated_at']) ? CarbonImmutable::parse($validated['terminated_at']) : CarbonImmutable::now();
+            if ($termination->startOfDay()->lessThan($lockedContract->start_date)) {
+                throw ValidationException::withMessages(['terminated_at' => __('workflow.invalid_termination')]);
             }
 
             $room = Room::query()->whereKey($lockedContract->room_id)->lockForUpdate()->firstOrFail();
 
             $lockedContract->update([
                 'status' => ContractStatus::Terminated,
-                'terminated_at' => $validated['terminated_at'] ?? now(),
+                'terminated_at' => $termination,
             ]);
 
             $hasActiveContract = Contract::query()
                 ->where('room_id', $room->id)
                 ->where('status', ContractStatus::Active)
-                ->exists();
+                ->lockForUpdate()->first(['id']) !== null;
 
             if (! $hasActiveContract && $room->status === RoomStatus::OCCUPIED) {
                 $room->update(['status' => RoomStatus::AVAILABLE]);
             }
 
             return $lockedContract->refresh();
-        });
+        }, attempts: 3);
     }
 }

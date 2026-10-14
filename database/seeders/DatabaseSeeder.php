@@ -20,5 +20,8 @@ class DatabaseSeeder extends Seeder
         $this->call(RoomSeeder::class);
         $this->call(ContractSeeder::class);
         $this->call(RoomReservationSeeder::class);
+        $this->call(ServiceSeeder::class);
+        $this->call(PropertyServiceSeeder::class);
+        $this->call(MeterReadingSeeder::class);
     }
 }

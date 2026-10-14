@@ -7,6 +7,7 @@ use App\Filament\Resources\Contracts\ContractResource;
 use App\Models\User;
 use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Validation\ValidationException;
 
 class CreateContract extends CreateRecord
 {
@@ -21,6 +22,10 @@ class CreateContract extends CreateRecord
 
         abort_unless($landlord instanceof User, 403);
 
-        return app(CreateContractAction::class)->handle($landlord, $data);
+        try {
+            return app(CreateContractAction::class)->handle($landlord, $data);
+        } catch (ValidationException $exception) {
+            throw ValidationException::withMessages(collect($exception->errors())->mapWithKeys(fn (array $errors, string $field): array => ['data.'.$field => $errors])->all());
+        }
     }
 }

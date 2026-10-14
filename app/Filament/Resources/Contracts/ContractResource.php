@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Contracts;
 
 use App\Filament\Resources\Contracts\Pages\CreateContract;
+use App\Filament\Resources\Contracts\Pages\EditContract;
 use App\Filament\Resources\Contracts\Pages\ListContracts;
 use App\Filament\Resources\Contracts\Schemas\ContractForm;
 use App\Filament\Resources\Contracts\Tables\ContractsTable;
@@ -13,7 +14,9 @@ use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Illuminate\Support\Facades\Gate;
 
 class ContractResource extends Resource
 {
@@ -53,7 +56,13 @@ class ContractResource extends Resource
         return [
             'index' => ListContracts::route('/'),
             'create' => CreateContract::route('/create'),
+            'edit' => EditContract::route('/{record}/edit'),
         ];
+    }
+
+    public static function canEdit(Model $record): bool
+    {
+        return Gate::allows('editDraft', $record);
     }
 
     public static function getEloquentQuery(): Builder

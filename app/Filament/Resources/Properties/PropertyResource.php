@@ -5,6 +5,7 @@ namespace App\Filament\Resources\Properties;
 use App\Filament\Resources\Properties\Pages\CreateProperty;
 use App\Filament\Resources\Properties\Pages\EditProperty;
 use App\Filament\Resources\Properties\Pages\ListProperties;
+use App\Filament\Resources\Properties\RelationManagers\PropertyServicesRelationManager;
 use App\Filament\Resources\Properties\Schemas\PropertyForm;
 use App\Filament\Resources\Properties\Tables\PropertiesTable;
 use App\Models\Property;
@@ -47,7 +48,7 @@ class PropertyResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            PropertyServicesRelationManager::class,
         ];
     }
 
