@@ -5,6 +5,7 @@ namespace App\Filament\Resources\Invoices\Pages;
 use App\Actions\Invoices\CancelInvoiceAction;
 use App\Enums\InvoiceStatus;
 use App\Filament\Resources\Invoices\InvoiceResource;
+use App\Filament\Resources\Rooms\RoomResource;
 use App\Models\Invoice;
 use App\Models\User;
 use Filament\Actions\Action;
@@ -17,7 +18,13 @@ class ViewInvoice extends ViewRecord
 
     protected function getHeaderActions(): array
     {
+        $room = $this->getRecord()->loadMissing('contract.room')->contract?->room;
+        $roomUrl = $room !== null && Gate::allows('view', $room)
+            ? RoomResource::getUrl('view', ['record' => $room, 'relation' => 'invoices']) : null;
+
         return [
+            Action::make('viewRoom')->label(fn (): string => __('resources.room.back_to_room'))
+                ->visible($roomUrl !== null)->url($roomUrl),
             Action::make('replaceInvoice')->label(fn (): string => __('workflow.replace_invoice'))
                 ->visible(fn (): bool => $this->getRecord()->status === InvoiceStatus::Cancelled && ! Invoice::query()->where('replaces_invoice_id', $this->getRecord()->id)->exists())
                 ->url(fn (): string => InvoiceResource::getUrl('create', ['replacement' => $this->getRecord()->id])),

@@ -21,7 +21,7 @@ return [
     'trashed' => 'Đã xóa',
     'start_date' => 'Ngày bắt đầu',
     'end_date' => 'Ngày kết thúc',
-    'rent_amount' => 'Giá thuê',
+    'rent_amount' => 'Giá thuê thỏa thuận',
     'unspecified' => 'Không xác định',
     'all' => 'Tất cả',
     'active' => 'Đang hoạt động',

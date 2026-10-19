@@ -2,6 +2,8 @@
 
 namespace Tests\Feature;
 
+use App\Actions\Contracts\ConfigureContractServiceAction;
+use App\Actions\Contracts\SaveContractOccupantAction;
 use App\Actions\Invoices\CancelInvoiceAction;
 use App\Actions\Invoices\GenerateInvoiceAction;
 use App\Actions\MeterReadings\CorrectMeterReadingAction;
@@ -11,6 +13,8 @@ use App\Models\Invoice;
 use App\Models\MeterReading;
 use App\Models\PropertyService;
 use App\Models\Service;
+use App\Services\MeterReadingInput;
+use Carbon\CarbonImmutable;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
@@ -18,6 +22,26 @@ use Tests\TestCase;
 class MySqlBillingWorkflowTest extends TestCase
 {
     private bool $transactionStarted = false;
+
+    public function test_contract_water_override_and_person_days_on_mysql(): void
+    {
+        $this->travelTo(CarbonImmutable::parse('2026-10-14 12:00:00'));
+        $contract = Contract::factory()->active()->create(['rent_amount' => 3000000]);
+        $contract->room->update(['max_occupants' => 4]);
+        $landlord = $contract->room->property->landlord;
+        $service = Service::factory()->for($landlord, 'landlord')->create(['billing_method' => 'metered', 'unit' => 'm3']);
+        PropertyService::factory()->for($contract->room->property)->for($service)->create(['effective_from' => '2026-10-01']);
+        app(ConfigureContractServiceAction::class)->handle($landlord, $contract, [
+            'service_id' => $service->id, 'use_default' => false, 'billing_method' => 'per_person', 'unit_price' => 90000, 'effective_from' => '2026-10-01',
+        ]);
+        app(SaveContractOccupantAction::class)->handle($landlord, $contract, ['full_name' => 'MySQL Resident', 'move_in_date' => '2026-10-17']);
+
+        $invoice = $this->generate($contract);
+
+        $this->assertSame('3043548.00', $invoice->total);
+        $this->assertSame(15, $invoice->items->firstWhere('type', 'per_person')->metadata['person_days']);
+        $this->assertSame([], app(MeterReadingInput::class)->services($landlord, $contract->room_id, '2026-10'));
+    }
 
     protected function setUp(): void
     {

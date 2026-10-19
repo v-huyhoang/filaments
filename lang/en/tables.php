@@ -21,7 +21,7 @@ return [
     'trashed' => 'Deleted records',
     'start_date' => 'Start date',
     'end_date' => 'End date',
-    'rent_amount' => 'Rent',
+    'rent_amount' => 'Agreed rent',
     'unspecified' => 'Unspecified',
     'all' => 'All',
     'active' => 'Active',

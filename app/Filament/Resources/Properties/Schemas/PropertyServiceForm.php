@@ -41,7 +41,7 @@ class PropertyServiceForm
                 ->visible($usesFixedPrice)->required($usesFixedPrice),
             Toggle::make('is_enabled')->label(fn (): string => __('services.fields.is_enabled'))->default(true)->required(),
             DatePicker::make('effective_from')->label(fn (): string => __('services.fields.effective_from'))
-                ->default(today())->minDate(today())->required()
+                ->default(fn (Get $get) => $get('billing_method') === BillingMethod::PerPerson->value ? today()->addMonthNoOverflow()->startOfMonth() : today())->minDate(today())->required()
                 ->helperText(fn (): string => __('services.price_history_help')),
         ];
     }

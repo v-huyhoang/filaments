@@ -42,6 +42,11 @@ class InvoiceResourceTest extends TestCase
             'contract_id' => $contract->id, 'billing_period' => today()->format('Y-m'),
         ])->call('create')->assertHasNoFormErrors();
         $this->assertDatabaseCount('invoices', 0);
+        $page->assertSeeHtml('<table class="invoice-items">')
+            ->assertSee(__('invoices.fields.charge_from'))
+            ->assertSee(__('invoices.fields.charge_to'))
+            ->assertSee(__('invoices.fields.unit'))
+            ->assertSee(__('invoices.calculation_details'));
         $page->call('create')->assertHasNoFormErrors();
         $this->assertDatabaseHas('invoices', ['contract_id' => $contract->id, 'landlord_id' => $landlord->id, 'status' => 'issued']);
         $this->assertDatabaseCount('invoice_items', 1);
@@ -61,11 +66,24 @@ class InvoiceResourceTest extends TestCase
     public function test_view_shows_snapshot_items_and_totals(): void
     {
         $invoice = Invoice::factory()->create();
-        InvoiceItem::factory()->for($invoice)->create(['name' => 'Snapshot rent']);
+        InvoiceItem::factory()->for($invoice)->create([
+            'name' => 'Snapshot rent',
+            'metadata' => [
+                'charge_from' => '2026-10-15', 'charge_to' => '2026-10-31',
+                'previous_value' => '100', 'current_value' => '120',
+                'person_days' => 17, 'days_in_month' => 31,
+                'occupants' => [['full_name' => '<script>alert(1)</script>', 'from' => '2026-10-15', 'until' => '2026-11-01', 'days' => 17]],
+            ],
+        ]);
         $invoice->update(['status' => InvoiceStatus::Issued]);
         $this->actingAs($invoice->landlord);
         Livewire::test(ViewInvoice::class, ['record' => $invoice->id])->assertOk()
-            ->assertSee('Snapshot rent')->assertSee('Test tenant')->assertSchemaStateSet(['total' => '3000000.00']);
+            ->assertSee('Snapshot rent')->assertSee('Test tenant')->assertSchemaStateSet(['total' => '3000000.00'])
+            ->assertSeeHtml('<table class="invoice-items">')->assertSeeHtml('scope="col"')
+            ->assertSee('15/10/2026')->assertSee('31/10/2026')
+            ->assertSee(__('invoices.calculation_details'))->assertSee(__('meter_readings.fields.previous_value'))
+            ->assertSee(__('occupancy.charge_until'))->assertSee('01/11/2026')
+            ->assertSee('<script>alert(1)</script>')->assertDontSeeHtml('<script>alert(1)</script>');
     }
 
     public function test_cancel_action_preserves_financial_history(): void
@@ -110,8 +128,8 @@ class InvoiceResourceTest extends TestCase
         $service = Service::factory()->for($landlord, 'landlord')->create(['billing_method' => BillingMethod::PerPerson]);
         PropertyService::factory()->for($contract->room->property)->for($service)->create();
         $this->actingAs($landlord);
-        Livewire::test(CreateInvoice::class)->fillForm(['contract_id' => $contract->id, 'billing_period' => today()->format('Y-m')])
-            ->call('create')->assertHasFormErrors(['occupant_count']);
+        Livewire::test(CreateInvoice::class)->fillForm(['contract_id' => $contract->id, 'billing_period' => today()->startOfMonth()->addMonth()->format('Y-m')])
+            ->call('create')->assertHasFormErrors(['billing_period']);
         $this->assertDatabaseCount('invoices', 0);
     }
 

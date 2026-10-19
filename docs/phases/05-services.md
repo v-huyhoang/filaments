@@ -74,6 +74,7 @@ manual
 - disabled services must not be automatically billed
 - service status changes are dated from today and preserve earlier billing eligibility; resolve status at the billing month's end rather than filtering only the current master flag
 - only valid property/service combinations may be configured
+- per-person property price revisions start only on the first day of a month; contract-specific service versions may override method/price without changing the property default
 
 ---
 

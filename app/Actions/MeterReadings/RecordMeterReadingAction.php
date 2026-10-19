@@ -7,6 +7,7 @@ use App\Models\MeterReading;
 use App\Models\Property;
 use App\Models\Room;
 use App\Models\User;
+use App\Services\MeterReadingInput;
 use App\Services\PropertyServicePricing;
 use Brick\Math\BigDecimal;
 use Carbon\CarbonImmutable;
@@ -45,7 +46,8 @@ class RecordMeterReadingAction
             $property = Property::query()->where('landlord_id', $landlord->id)->whereKey($room->property_id)->lockForUpdate()->firstOrFail();
             $room = Room::query()->whereKey($room->id)->lockForUpdate()->firstOrFail();
             $periodEnd = CarbonImmutable::createFromFormat('!Y-m', $validated['billing_period'])->endOfMonth();
-            $configuration = $this->pricing->billingCandidatesForUpdate($landlord, $property, $periodEnd)->firstWhere('service_id', (int) $validated['service_id']);
+            $configurations = $this->pricing->billingCandidatesForUpdate($landlord, $property, $periodEnd);
+            $configuration = app(MeterReadingInput::class)->metered($room, $configurations, $periodEnd->startOfMonth(), true)->firstWhere('service_id', (int) $validated['service_id']);
             $service = $configuration?->service;
 
             if ($service === null || $service->billing_method !== BillingMethod::Metered) {
@@ -58,17 +60,18 @@ class RecordMeterReadingAction
                 throw ValidationException::withMessages(['billing_period' => __('meter_readings.errors.period_order')]);
             }
 
-            if ($latest !== null && $validated['billing_period'] !== CarbonImmutable::createFromFormat('!Y-m', $latest->billing_period)->addMonth()->format('Y-m')) {
+            $continuesMetered = $latest !== null && app(MeterReadingInput::class)->metered($room, $configurations, $periodEnd->startOfMonth()->subMonth(), true)->contains('service_id', $service->id);
+            if ($continuesMetered && $validated['billing_period'] !== CarbonImmutable::createFromFormat('!Y-m', $latest->billing_period)->addMonth()->format('Y-m')) {
                 throw ValidationException::withMessages(['billing_period' => __('workflow.missing_period')]);
             }
 
-            $previous = $latest?->current_value ?? ($validated['previous_value'] ?? null);
+            $previous = $continuesMetered ? $latest->current_value : ($validated['previous_value'] ?? null);
 
             if ($previous === null) {
                 throw ValidationException::withMessages(['previous_value' => __('meter_readings.errors.initial_value_required')]);
             }
 
-            if ($latest !== null && isset($validated['previous_value']) && ! BigDecimal::of((string) $validated['previous_value'])->isEqualTo($previous)) {
+            if ($continuesMetered && isset($validated['previous_value']) && ! BigDecimal::of((string) $validated['previous_value'])->isEqualTo($previous)) {
                 throw ValidationException::withMessages(['previous_value' => __('meter_readings.errors.previous_mismatch')]);
             }
 

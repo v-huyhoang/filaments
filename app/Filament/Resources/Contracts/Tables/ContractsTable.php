@@ -5,6 +5,7 @@ namespace App\Filament\Resources\Contracts\Tables;
 use App\Actions\Contracts\ActivateContractAction;
 use App\Actions\Contracts\TerminateContractAction;
 use App\Enums\ContractStatus;
+use App\Filament\Resources\Contracts\ContractResource;
 use App\Filament\Resources\Invoices\InvoiceResource;
 use App\Models\Contract;
 use App\Models\User;
@@ -35,6 +36,8 @@ class ContractsTable
                 SelectFilter::make('status')->label(fn (): string => __('tables.status'))->options(ContractStatus::class),
             ])
             ->recordActions([
+                Action::make('manageOccupancy')->label(fn (): string => __('occupancy.manage'))
+                    ->url(fn (Contract $record): string => ContractResource::getUrl('view', ['record' => $record])),
                 EditAction::make()->visible(fn (Contract $record): bool => $record->status === ContractStatus::Draft),
                 Action::make('invoice')->label(fn (): string => __('workflow.bill_contract'))
                     ->visible(fn (Contract $record): bool => in_array($record->status, [ContractStatus::Active, ContractStatus::Terminated, ContractStatus::Expired], true))

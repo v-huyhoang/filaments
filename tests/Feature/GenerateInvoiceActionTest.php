@@ -7,6 +7,7 @@ use App\Enums\BillingMethod;
 use App\Enums\ContractStatus;
 use App\Enums\InvoiceStatus;
 use App\Models\Contract;
+use App\Models\ContractOccupant;
 use App\Models\Invoice;
 use App\Models\MeterReading;
 use App\Models\PropertyService;
@@ -38,7 +39,7 @@ class GenerateInvoiceActionTest extends TestCase
         $this->assertSame('3000000.00', $invoice->total);
         $this->assertSame($invoice->total, $invoice->subtotal);
         $this->assertSame($contract->room->property->landlord_id, $invoice->landlord_id);
-        $this->assertSame(today()->startOfMonth()->day(5)->toDateString(), $invoice->due_date->toDateString());
+        $this->assertSame(today()->startOfMonth()->addMonth()->day(5)->toDateString(), $invoice->due_date->toDateString());
         $this->assertCount(1, $invoice->items);
         $this->assertSame('3000000.00', $invoice->items->first()->unit_price);
         $this->assertSame($contract->tenant->full_name, $invoice->snapshot['tenant_name']);
@@ -52,7 +53,8 @@ class GenerateInvoiceActionTest extends TestCase
         $this->configure($contract, BillingMethod::Fixed);
         $this->configure($contract, BillingMethod::PerPerson);
         $this->configure($contract, BillingMethod::Manual);
-        $invoice = $this->generate($contract, ['occupant_count' => 2]);
+        ContractOccupant::factory()->for($contract)->count(2)->create();
+        $invoice = $this->generate($contract);
         $this->assertSame('3227500.00', $invoice->total);
         $this->assertCount(4, $invoice->items);
         $item = $invoice->items->firstWhere('type', 'metered');
@@ -117,7 +119,7 @@ class GenerateInvoiceActionTest extends TestCase
             $this->fail('Missing room reading was accepted.');
         } catch (ValidationException $exception) {
             $this->assertArrayHasKey('billing_period', $exception->errors());
-            $this->assertSame(__('invoices.errors.missing_reading', ['service' => $configuration->service->name]), $exception->errors()['billing_period'][0]);
+            $this->assertSame(__('invoices.errors.missing_reading', ['service' => $configuration->service->name, 'period' => today()->format('Y-m')]), $exception->errors()['billing_period'][0]);
         }
         $this->assertDatabaseCount('invoices', 0);
         $this->assertDatabaseCount('invoice_items', 0);
@@ -306,7 +308,7 @@ class GenerateInvoiceActionTest extends TestCase
     private function generate(Contract $contract, array $overrides = []): Invoice
     {
         return app(GenerateInvoiceAction::class)->handle($contract->room->property->landlord, [
-            'contract_id' => $contract->id, 'billing_period' => today()->format('Y-m'), ...$overrides,
+            'contract_id' => $contract->id, 'billing_period' => today()->startOfMonth()->addMonth()->format('Y-m'), ...$overrides,
         ]);
     }
 }

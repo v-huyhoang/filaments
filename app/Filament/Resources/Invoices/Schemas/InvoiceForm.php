@@ -9,8 +9,8 @@ use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
-use Filament\Infolists\Components\RepeatableEntry;
 use Filament\Infolists\Components\TextEntry;
+use Filament\Infolists\Components\ViewEntry;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
@@ -32,8 +32,7 @@ class InvoiceForm
                     ->searchable()->getSearchResultsUsing(fn (string $search): array => self::contractOptions($search))->required(),
                 TextInput::make('billing_period')->label(fn (): string => __('invoices.fields.billing_period'))
                     ->type('month')->default(today()->format('Y-m'))->placeholder('YYYY-MM')->rule('date_format:Y-m')->required(),
-                TextInput::make('occupant_count')->label(fn (): string => __('invoices.fields.occupant_count'))
-                    ->integer()->minValue(1)->helperText(fn (): string => __('invoices.occupant_help')),
+                TextEntry::make('occupancy_help')->hiddenLabel()->state(fn (): string => __('occupancy.invoice_help')),
                 Textarea::make('notes')->label(fn (): string => __('invoices.fields.notes'))->maxLength(5000)
                     ->helperText(fn (): string => __('invoices.generation_help')),
                 Hidden::make('replaces_invoice_id'),
@@ -44,13 +43,10 @@ class InvoiceForm
                         TextEntry::make('preview_policy')->label(fn (): string => __('workflow.billing_policy'))->state(fn (): string => __('invoices.generation_help')),
                         TextEntry::make('preview_tenant')->label(fn (): string => __('invoices.fields.tenant'))->state(fn (Component $livewire): ?string => $livewire->invoicePreview['attributes']['snapshot']['tenant_name'] ?? null),
                         TextEntry::make('preview_due')->label(fn (): string => __('invoices.fields.due_date'))->state(fn (Component $livewire): ?string => $livewire->invoicePreview['attributes']['due_date'] ?? null),
-                        RepeatableEntry::make('preview_items')->label(fn (): string => __('invoices.fields.items'))->state(fn (Component $livewire): array => $livewire->invoicePreview['items'] ?? [])->schema([
-                            TextEntry::make('name')->label(fn (): string => __('invoices.fields.name')),
-                            TextEntry::make('quantity')->label(fn (): string => __('invoices.fields.quantity')),
-                            TextEntry::make('unit_price')->label(fn (): string => __('invoices.fields.unit_price'))->money('VND', decimalPlaces: 2),
-                            TextEntry::make('amount')->label(fn (): string => __('invoices.fields.amount'))->money('VND', decimalPlaces: 2),
-                        ])->columns(4)->columnSpanFull(),
-                        TextEntry::make('preview_total')->label(fn (): string => __('invoices.fields.total'))->state(fn (Component $livewire): ?string => $livewire->invoicePreview['attributes']['total'] ?? null)->money('VND', decimalPlaces: 2),
+                        TextEntry::make('preview_service_period')->label(fn (): string => __('invoices.fields.service_billing_period'))->state(fn (Component $livewire): ?string => $livewire->invoicePreview['attributes']['snapshot']['service_billing_period'] ?? null),
+                        ViewEntry::make('preview_items')->label(fn (): string => __('invoices.fields.items'))->state(fn (Component $livewire): array => $livewire->invoicePreview['items'] ?? [])
+                            ->view('filament.invoices.items')->columnSpanFull(),
+                        TextEntry::make('preview_total')->label(fn (): string => __('invoices.fields.total'))->state(fn (Component $livewire): ?string => $livewire->invoicePreview['attributes']['total'] ?? null)->money('VND', decimalPlaces: 2)->weight('bold')->size('lg')->columnSpanFull(),
                     ]),
             ]);
     }

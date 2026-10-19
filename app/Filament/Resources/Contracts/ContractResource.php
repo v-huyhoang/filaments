@@ -5,6 +5,9 @@ namespace App\Filament\Resources\Contracts;
 use App\Filament\Resources\Contracts\Pages\CreateContract;
 use App\Filament\Resources\Contracts\Pages\EditContract;
 use App\Filament\Resources\Contracts\Pages\ListContracts;
+use App\Filament\Resources\Contracts\Pages\ViewContract;
+use App\Filament\Resources\Contracts\RelationManagers\ContractServicesRelationManager;
+use App\Filament\Resources\Contracts\RelationManagers\OccupantsRelationManager;
 use App\Filament\Resources\Contracts\Schemas\ContractForm;
 use App\Filament\Resources\Contracts\Tables\ContractsTable;
 use App\Models\Contract;
@@ -47,7 +50,8 @@ class ContractResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            OccupantsRelationManager::class,
+            ContractServicesRelationManager::class,
         ];
     }
 
@@ -57,6 +61,7 @@ class ContractResource extends Resource
             'index' => ListContracts::route('/'),
             'create' => CreateContract::route('/create'),
             'edit' => EditContract::route('/{record}/edit'),
+            'view' => ViewContract::route('/{record}'),
         ];
     }
 

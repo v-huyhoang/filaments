@@ -11,6 +11,7 @@ use App\Models\MeterReading;
 use App\Models\Property;
 use App\Models\Room;
 use App\Models\User;
+use App\Services\ContractServicePricing;
 use App\Services\InvoiceCalculator;
 use App\Services\PropertyServicePricing;
 use Carbon\CarbonImmutable;
@@ -25,7 +26,7 @@ class GenerateInvoiceAction
 {
     public function __construct(private InvoiceCalculator $calculator, private PropertyServicePricing $pricing) {}
 
-    /** @param array{contract_id: int, billing_period: string, occupant_count?: int|null, notes?: string|null, replaces_invoice_id?: int|null, replacement_reason?: string|null} $attributes */
+    /** @param array{contract_id: int, billing_period: string, notes?: string|null, replaces_invoice_id?: int|null, replacement_reason?: string|null} $attributes */
     public function handle(User $landlord, array $attributes, ?string $expectedFingerprint = null): Invoice
     {
         return $this->run($landlord, $attributes, false, $expectedFingerprint);
@@ -48,7 +49,7 @@ class GenerateInvoiceAction
         $validated = Validator::make($attributes, [
             'contract_id' => ['required', 'integer'],
             'billing_period' => ['required', 'date_format:Y-m'],
-            'occupant_count' => ['nullable', 'integer', 'min:1'],
+            'occupant_count' => ['prohibited'],
             'notes' => ['nullable', 'string', 'max:5000'],
             'replaces_invoice_id' => ['nullable', 'integer'],
             'replacement_reason' => ['required_with:replaces_invoice_id', 'nullable', 'string', 'max:5000'],
@@ -70,13 +71,14 @@ class GenerateInvoiceAction
                 $property = Property::query()->where('landlord_id', $landlord->id)->whereKey($contract->room->property_id)->lockForUpdate()->firstOrFail();
                 $room = Room::query()->whereKey($contract->room_id)->lockForUpdate()->firstOrFail();
                 $period = CarbonImmutable::createFromFormat('!Y-m', $validated['billing_period']);
+                $servicePeriod = $period->subMonth();
+                $rentBillable = $this->overlapsTenancy($contract, $period);
+                $servicesBillable = $this->overlapsTenancy($contract, $servicePeriod);
 
                 $billableStatus = $contract->status === ContractStatus::Active ||
                     ($contract->status === ContractStatus::Terminated && $contract->terminated_at !== null) ||
                     ($contract->status === ContractStatus::Expired && $contract->end_date?->lessThan(today()));
-                if (! $billableStatus || $contract->start_date->greaterThan($period->endOfMonth()) ||
-                    ($contract->end_date !== null && $contract->end_date->lessThan($period)) ||
-                    ($contract->terminated_at !== null && $contract->terminated_at->lessThan($period))) {
+                if (! $billableStatus || (! $rentBillable && ! $servicesBillable)) {
                     throw ValidationException::withMessages(['contract_id' => __('invoices.errors.contract_not_billable')]);
                 }
 
@@ -89,29 +91,40 @@ class GenerateInvoiceAction
                     throw ValidationException::withMessages(['replaces_invoice_id' => __('workflow.invalid_replacement')]);
                 }
 
-                $occupantCount = isset($validated['occupant_count']) ? (int) $validated['occupant_count'] : null;
-                if ($occupantCount !== null && $occupantCount > $room->max_occupants) {
-                    throw ValidationException::withMessages(['occupant_count' => __('invoices.errors.occupant_count_exceeds_capacity')]);
+                $configurations = $servicesBillable
+                    ? $this->pricing->billingCandidatesForUpdate($landlord, $property, $servicePeriod->endOfMonth())->sortBy('service_id')->values()
+                    : collect();
+                $configurations = app(ContractServicePricing::class)->resolve($contract, $configurations, $servicePeriod, true);
+                $previousInvoice = $contract->invoices()->where('billing_period', $servicePeriod->format('Y-m'))
+                    ->where('status', '!=', InvoiceStatus::Cancelled)->lockForUpdate()->first();
+                if ($previousInvoice !== null && ! isset($previousInvoice->snapshot['billing_policy'])) {
+                    $alreadyBilled = $previousInvoice->items()->where('type', '!=', 'rent')->get()->pluck('metadata.service_id');
+                    $configurations = $configurations->reject(fn ($configuration): bool => $alreadyBilled->contains($configuration->service_id));
                 }
-
-                $configurations = $this->pricing->billingCandidatesForUpdate($landlord, $property, $period->endOfMonth())->sortBy('service_id')->values();
+                $contract->setRelation('occupants', $contract->occupants()->orderBy('id')->lockForUpdate()->get());
                 $readings = MeterReading::query()->forLandlord($landlord)->where('room_id', $room->id)
-                    ->whereIn('service_id', $configurations->pluck('service_id'))->where('billing_period', $validated['billing_period'])->lockForUpdate()->get();
-                $calculation = $this->calculator->calculate($contract, $configurations, $readings, $occupantCount);
+                    ->whereIn('service_id', $configurations->pluck('service_id'))->where('billing_period', $servicePeriod->format('Y-m'))->lockForUpdate()->get();
+                $calculation = $this->calculator->calculate($contract, $configurations, $readings, $period);
+                if ($calculation['items'] === []) {
+                    throw ValidationException::withMessages(['contract_id' => __('invoices.errors.contract_not_billable')]);
+                }
+                $dueDate = $period->day(min($contract->payment_due_day, $period->daysInMonth))->max($contract->start_date);
 
                 $invoiceAttributes = [
                     'landlord_id' => $landlord->id,
                     'contract_id' => $contract->id,
                     'billing_period' => $validated['billing_period'],
-                    'due_date' => $period->day(min($contract->payment_due_day, $period->daysInMonth))->toDateString(),
+                    'due_date' => $dueDate->toDateString(),
                     'subtotal' => $calculation['subtotal'],
                     'total' => $calculation['total'],
                     'status' => InvoiceStatus::Draft,
                     'snapshot' => [
+                        'billing_policy' => 'rent_in_advance_services_in_arrears',
+                        'service_billing_period' => $servicesBillable ? $servicePeriod->format('Y-m') : null,
                         'tenant_name' => $contract->tenant->full_name,
                         'property_name' => $contract->room->property->name,
                         'room_number' => $room->room_number,
-                        'occupant_count' => $occupantCount,
+                        'occupants' => $contract->occupants->map(fn ($occupant): array => $occupant->only(['id', 'full_name', 'move_in_date', 'move_out_date']))->all(),
                     ],
                     'notes' => $validated['notes'] ?? null,
                     'revision' => ($latestInvoice?->revision ?? 0) + 1,
@@ -141,5 +154,12 @@ class GenerateInvoiceAction
         } catch (UniqueConstraintViolationException $exception) {
             throw ValidationException::withMessages(['billing_period' => __('invoices.errors.duplicate')]);
         }
+    }
+
+    private function overlapsTenancy(Contract $contract, CarbonImmutable $period): bool
+    {
+        return $contract->start_date->lessThanOrEqualTo($period->endOfMonth()) &&
+            ($contract->end_date === null || $contract->end_date->greaterThanOrEqualTo($period)) &&
+            ($contract->terminated_at === null || $contract->terminated_at->copy()->startOfDay()->greaterThan($period));
     }
 }

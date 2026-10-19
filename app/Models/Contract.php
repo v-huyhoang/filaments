@@ -55,6 +55,16 @@ class Contract extends Model
         return $this->hasMany(Invoice::class);
     }
 
+    public function occupants(): HasMany
+    {
+        return $this->hasMany(ContractOccupant::class);
+    }
+
+    public function contractServices(): HasMany
+    {
+        return $this->hasMany(ContractService::class);
+    }
+
     public function scopeCommitted(Builder $query): Builder
     {
         return $query->whereIn('status', [ContractStatus::Scheduled, ContractStatus::Active]);

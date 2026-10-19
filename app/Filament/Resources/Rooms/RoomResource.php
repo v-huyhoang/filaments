@@ -2,9 +2,13 @@
 
 namespace App\Filament\Resources\Rooms;
 
+use App\Enums\InvoiceStatus;
 use App\Filament\Resources\Rooms\Pages\CreateRoom;
 use App\Filament\Resources\Rooms\Pages\EditRoom;
 use App\Filament\Resources\Rooms\Pages\ListRooms;
+use App\Filament\Resources\Rooms\Pages\ViewRoom;
+use App\Filament\Resources\Rooms\RelationManagers\InvoicesRelationManager;
+use App\Filament\Resources\Rooms\RelationManagers\MeterReadingsRelationManager;
 use App\Filament\Resources\Rooms\Schemas\RoomForm;
 use App\Filament\Resources\Rooms\Tables\RoomsTable;
 use App\Models\Room;
@@ -47,7 +51,8 @@ class RoomResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            'meter-readings' => MeterReadingsRelationManager::class,
+            'invoices' => InvoicesRelationManager::class,
         ];
     }
 
@@ -56,6 +61,7 @@ class RoomResource extends Resource
         return [
             'index' => ListRooms::route('/'),
             'create' => CreateRoom::route('/create'),
+            'view' => ViewRoom::route('/{record}'),
             'edit' => EditRoom::route('/{record}/edit'),
         ];
     }
@@ -63,7 +69,16 @@ class RoomResource extends Resource
     public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()
-            ->whereHas('property', fn (Builder $query) => $query->where('landlord_id', auth()->id()));
+            ->whereHas('property', fn (Builder $query) => $query->where('landlord_id', auth()->id()))
+            ->withCount([
+                'meterReadings as previous_month_readings_count' => fn (Builder $query) => $query
+                    ->where('billing_period', today()->startOfMonth()->subMonth()->format('Y-m'))
+                    ->whereHas('service', fn (Builder $query) => $query->where('landlord_id', auth()->id())),
+                'invoices as unpaid_invoices_count' => fn (Builder $query) => $query
+                    ->where('invoices.landlord_id', auth()->id())
+                    ->where('invoices.total', '>', 0)
+                    ->whereIn('invoices.status', [InvoiceStatus::Issued, InvoiceStatus::Partial, InvoiceStatus::Overdue]),
+            ]);
     }
 
     public static function getRecordRouteBindingEloquentQuery(): Builder

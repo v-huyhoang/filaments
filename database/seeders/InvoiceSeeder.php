@@ -31,7 +31,7 @@ class InvoiceSeeder extends Seeder
                     try {
                         $generateInvoice->handle($landlord, [
                             'contract_id' => $contract->id, 'billing_period' => today()->format('Y-m'),
-                            'occupant_count' => 1, 'notes' => 'Demo invoice with one occupant, created by InvoiceSeeder.',
+                            'notes' => 'Demo invoice created by InvoiceSeeder using recorded occupancy history.',
                         ]);
                     } catch (ValidationException $exception) {
                         $this->command?->warn('Skipped contract '.$contract->id.': '.$exception->getMessage());

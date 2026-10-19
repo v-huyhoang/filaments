@@ -4,6 +4,7 @@ namespace App\Filament\Resources\Properties\RelationManagers;
 
 use App\Actions\Services\ConfigurePropertyServiceAction;
 use App\Actions\Services\UpdatePropertyServiceAction;
+use App\Enums\BillingMethod;
 use App\Filament\Resources\Properties\Schemas\PropertyServiceForm;
 use App\Models\PropertyService;
 use App\Models\User;
@@ -53,7 +54,9 @@ class PropertyServicesRelationManager extends RelationManager
                         'unit_price' => $record->unit_price,
                         'fixed_price' => $record->fixed_price,
                         'is_enabled' => $record->is_enabled,
-                        'effective_from' => $record->effective_from->max(today())->addDay()->toDateString(),
+                        'effective_from' => $record->service->billing_method === BillingMethod::PerPerson
+                            ? $record->effective_from->max(today())->addMonthNoOverflow()->startOfMonth()->toDateString()
+                            : $record->effective_from->max(today())->addDay()->toDateString(),
                     ])
                     ->schema(fn (PropertyService $record): array => PropertyServiceForm::components($record->service))
                     ->action(fn (PropertyService $record, array $data) => app(UpdatePropertyServiceAction::class)->handle($this->landlord(), $record, $data)),

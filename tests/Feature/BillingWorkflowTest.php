@@ -14,6 +14,7 @@ use App\Filament\Resources\Invoices\Schemas\InvoiceForm;
 use App\Filament\Resources\MeterReadings\Pages\CreateMeterReading;
 use App\Filament\Resources\MeterReadings\Pages\ListMeterReadings;
 use App\Models\Contract;
+use App\Models\ContractOccupant;
 use App\Models\Invoice;
 use App\Models\InvoiceItem;
 use App\Models\MeterReading;
@@ -158,12 +159,14 @@ class BillingWorkflowTest extends TestCase
         $contract->room->update(['max_occupants' => 2]);
         $service = Service::factory()->for($contract->room->property->landlord, 'landlord')->create(['billing_method' => 'per_person']);
         PropertyService::factory()->for($contract->room->property)->for($service)->create(['unit_price' => 100000, 'effective_from' => today()->startOfMonth()]);
-        $original = $this->generate($contract, ['occupant_count' => 1]);
+        ContractOccupant::factory()->for($contract)->create();
+        $original = $this->generate($contract, ['billing_period' => today()->startOfMonth()->addMonth()->format('Y-m')]);
         app(CancelInvoiceAction::class)->handle($original->landlord, $original);
+        ContractOccupant::factory()->for($contract)->create();
         $this->actingAs($original->landlord);
         $page = Livewire::withQueryParams(['replacement' => $original->id])->test(CreateInvoice::class)
             ->assertFormSet(['contract_id' => $contract->id, 'billing_period' => $original->billing_period, 'replaces_invoice_id' => $original->id])
-            ->fillForm(['occupant_count' => 2, 'replacement_reason' => 'Actual occupants are two'])
+            ->fillForm(['replacement_reason' => 'Actual occupants are two'])
             ->call('create')->assertHasNoFormErrors()->assertSet('invoicePreview.attributes.total', '3200000.00');
         $this->assertDatabaseCount('invoices', 1);
         $page->call('create')->assertHasNoFormErrors();
@@ -185,7 +188,7 @@ class BillingWorkflowTest extends TestCase
         app(TerminateContractAction::class)->handle($contract->room->property->landlord, $contract, '2026-09-30');
         $this->actingAs($contract->room->property->landlord);
         Livewire::withQueryParams(['contract' => $contract->id])->test(CreateInvoice::class)
-            ->assertFormSet(['contract_id' => $contract->id, 'billing_period' => '2026-09']);
+            ->assertFormSet(['contract_id' => $contract->id, 'billing_period' => '2026-10']);
     }
 
     public function test_client_cannot_change_server_reviewed_preview(): void
@@ -252,10 +255,10 @@ class BillingWorkflowTest extends TestCase
         $contract = Contract::factory()->active()->create(['rent_amount' => 3000000]);
         $configuration = PropertyService::factory()->for($contract->room->property)->create(['effective_from' => today()->startOfMonth(), 'unit_price' => 4000]);
         $reading = MeterReading::factory()->for($contract->room)->for($configuration->service)->create(['previous_value' => 100, 'current_value' => 125, 'usage' => 25]);
-        $original = $this->generate($contract);
+        $original = $this->generate($contract, ['billing_period' => today()->startOfMonth()->addMonth()->format('Y-m')]);
         app(CancelInvoiceAction::class)->handle($original->landlord, $original);
         app(CorrectMeterReadingAction::class)->handle($original->landlord, $reading, ['current_value' => 120, 'reason' => 'Wrong reading before cancellation']);
-        $replacement = $this->generate($contract, ['replaces_invoice_id' => $original->id, 'replacement_reason' => 'Correct meter typo']);
+        $replacement = $this->generate($contract, ['billing_period' => $original->billing_period, 'replaces_invoice_id' => $original->id, 'replacement_reason' => 'Correct meter typo']);
         $this->assertSame('3100000.00', $original->fresh()->total);
         $this->assertSame('25.000', $original->items()->where('type', 'metered')->firstOrFail()->quantity);
         $this->assertSame('125.000', $original->items()->where('type', 'metered')->firstOrFail()->metadata['current_value']);
@@ -388,8 +391,8 @@ class BillingWorkflowTest extends TestCase
         $this->travelTo(now()->setDate(2026, 10, 14));
         app(UpdateServiceAction::class)->handle($owner, $service->fresh(), [...$attributes, 'is_active' => true]);
         MeterReading::factory()->for($contract->room)->for($service)->create(['billing_period' => '2026-08', 'usage' => 25]);
-        $this->assertSame(2, $this->generate($contract, ['billing_period' => '2026-08'])->items->count());
-        $this->assertSame(1, $this->generate($contract, ['billing_period' => '2026-09'])->items->count());
+        $this->assertSame(2, $this->generate($contract, ['billing_period' => '2026-09'])->items->count());
+        $this->assertSame(1, $this->generate($contract, ['billing_period' => '2026-10'])->items->count());
         $this->assertSame([$service->id => $service->name], app(MeterReadingInput::class)->services($owner, $contract->room_id, '2026-10'));
     }
 

@@ -18,7 +18,7 @@ class PropertyServicePricingTest extends TestCase
     public function test_billing_method_selects_correct_price(string $method, array $prices, string|int $unitPrice, string|int $fixedPrice): void
     {
         $result = app(PropertyServicePricing::class)->validate(BillingMethod::from($method), [
-            ...$prices, 'effective_from' => today()->toDateString(),
+            ...$prices, 'effective_from' => today()->addMonthNoOverflow()->startOfMonth()->toDateString(),
         ]);
         $this->assertSame($unitPrice, $result['unit_price']);
         $this->assertSame($fixedPrice, $result['fixed_price']);

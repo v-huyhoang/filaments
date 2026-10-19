@@ -8,6 +8,7 @@ use App\Models\Room;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Services\ContractValidator;
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
@@ -32,6 +33,18 @@ class UpdateDraftContractAction
             }
             if (! Tenant::query()->where('landlord_id', $landlord->id)->whereKey($validated['tenant_id'])->exists()) {
                 throw ValidationException::withMessages(['tenant_id' => __('messages.tenant_unavailable')]);
+            }
+            $occupants = $contract->occupants()->lockForUpdate()->get();
+            if ($room->id !== $contract->room_id && ($occupants->isNotEmpty() || $contract->contractServices()->lockForUpdate()->first() !== null)) {
+                throw ValidationException::withMessages(['room_id' => __('occupancy.room_locked')]);
+            }
+            $start = CarbonImmutable::parse($validated['start_date']);
+            $until = filled($validated['end_date'] ?? null) ? CarbonImmutable::parse($validated['end_date'])->addDay() : null;
+            foreach ($occupants as $occupant) {
+                if ($occupant->move_in_date->lessThan($start) || ($until !== null &&
+                    ($occupant->move_in_date->greaterThan($until) || $occupant->move_out_date?->greaterThan($until)))) {
+                    throw ValidationException::withMessages(['start_date' => __('occupancy.outside_contract')]);
+                }
             }
             if (($validated['status'] ?? 'draft') === ContractStatus::Scheduled->value) {
                 $this->validator->ensureRoomCanBeCommitted($room, $validated, null, $contract);

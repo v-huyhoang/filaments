@@ -202,11 +202,13 @@ Changing room/service configuration later does not alter the issued invoice.
 ## Implementation Decisions
 
 - Preview does not write records. The UI requires a second confirmation with unchanged inputs; issue validates the reviewed fingerprint again under transaction locks. Draft remains an internal transactional state while items are inserted.
-- Bill the full contract rent for an overlapping billing month; daily proration is not supported.
-- Resolve service pricing at the end of the billing month, matching meter-reading eligibility.
-- Require an explicit actual occupant count for per-person fees, bounded by room capacity; never assume capacity equals occupancy.
+- Treat billing_period as the collection month. Collect that month's rent in advance and the previous month's services in arrears. First-month rent is prorated from move-in through month end using actual calendar days; later rental months remain full.
+- Due dates use the contract payment day, clamped to month end and never before move-in. Permit the month after tenancy ends for final services only, without another rent charge or an empty final invoice.
+- Resolve service pricing, meter readings, contract overrides and occupancy at the previous usage month. Snapshot the billing policy and item periods; do not charge services again if a legacy same-month invoice already includes them.
+- Calculate per-person monthly fees from individual occupancy histories, using inclusive arrival and exclusive departure. Use actual month length and round the combined person-day fee to whole VND. Missing history blocks billing; manual headcounts are not accepted.
+- Contract service versions override the property method/price from the first day of a month, preserving history and never billing both default and override for the same service.
 - Manual services are not automatically billed; manual line-item entry is not supported in this phase.
-- Round each line to two decimal places using half-up rounding, then sum the rounded lines.
+- Round other lines to two decimal places using half-up rounding, then sum the rounded lines. Per-person lines use whole-VND rounding only after summing person-days.
 - Store landlord ownership and tenant/property/room labels as invoice snapshots so historical access survives soft-deleted source records.
 - Issued financial fields and line items cannot be edited or deleted through model operations. Cancellation preserves all snapshots; an explicitly linked new revision can replace the latest cancelled invoice with a mandatory reason.
 - Active contracts and checked-out/expired contracts can bill overlapping actual tenancy months. Check-out bounds the final billable month, even when the original end date is later.

@@ -30,6 +30,10 @@ Contract contains the agreed rental price.
 
 Room price changes must not modify existing contracts.
 
+A Contract has many ContractOccupants, each with a name, move-in date and optional move-out date.
+The primary tenant must also be recorded as an occupant when per-person services are billed.
+ContractService versions may override a property service's billing method and price for this contract; absent overrides inherit the property default.
+
 ## Invoice
 
 Invoice belongs to a Contract.

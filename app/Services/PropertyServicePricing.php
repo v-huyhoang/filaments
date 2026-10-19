@@ -6,10 +6,12 @@ use App\Enums\BillingMethod;
 use App\Models\Property;
 use App\Models\PropertyService;
 use App\Models\User;
+use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\ValidationException;
 
 class PropertyServicePricing
 {
@@ -38,7 +40,7 @@ class PropertyServicePricing
      * @param  array{unit_price?: numeric|null, fixed_price?: numeric|null, is_enabled?: bool, effective_from: string}  $attributes
      * @return array{unit_price: numeric, fixed_price: numeric, is_enabled: bool, effective_from: string}
      */
-    public function validate(BillingMethod $method, array $attributes): array
+    public function validate(BillingMethod $method, array $attributes, bool $initialContractConfiguration = false): array
     {
         $usesUnitPrice = in_array($method, [BillingMethod::Metered, BillingMethod::PerPerson], true);
         $usesFixedPrice = $method === BillingMethod::Fixed;
@@ -47,8 +49,12 @@ class PropertyServicePricing
             'unit_price' => $usesUnitPrice ? ['required', 'numeric', 'decimal:0,2', 'min:0', 'max:9999999999.99'] : ['prohibited'],
             'fixed_price' => $usesFixedPrice ? ['required', 'numeric', 'decimal:0,2', 'min:0', 'max:9999999999.99'] : ['prohibited'],
             'is_enabled' => ['sometimes', 'required', 'boolean'],
-            'effective_from' => ['required', 'date_format:Y-m-d', 'after_or_equal:today'],
+            'effective_from' => ['required', 'date_format:Y-m-d', 'after_or_equal:'.($initialContractConfiguration ? today()->startOfMonth()->toDateString() : 'today')],
         ])->validate();
+
+        if ($method === BillingMethod::PerPerson && CarbonImmutable::parse($validated['effective_from'])->day !== 1) {
+            throw ValidationException::withMessages(['effective_from' => __('occupancy.first_of_month')]);
+        }
 
         return [
             'unit_price' => $usesUnitPrice ? $validated['unit_price'] : 0,

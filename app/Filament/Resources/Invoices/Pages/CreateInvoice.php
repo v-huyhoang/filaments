@@ -33,14 +33,19 @@ class CreateInvoice extends CreateRecord
             abort_unless($invoice->status === InvoiceStatus::Cancelled, 422);
             $this->form->fill([
                 'contract_id' => $invoice->contract_id, 'billing_period' => $invoice->billing_period,
-                'occupant_count' => $invoice->snapshot['occupant_count'] ?? null, 'replaces_invoice_id' => $invoice->id,
+                'replaces_invoice_id' => $invoice->id,
             ]);
         } elseif (request()->filled('contract')) {
             $contract = Contract::query()->whereHas('room.property', fn (Builder $query) => $query->where('landlord_id', auth()->id()))
                 ->whereHas('tenant', fn (Builder $query) => $query->where('landlord_id', auth()->id()))->findOrFail(request()->integer('contract'));
             Gate::authorize('view', $contract);
-            $lastDate = collect([today(), $contract->end_date, $contract->terminated_at])->filter()->sort()->first();
-            $this->form->fill(['contract_id' => $contract->id, 'billing_period' => $lastDate->format('Y-m')]);
+            $lastDate = collect([$contract->end_date, $contract->terminated_at?->copy()->subDay()])->filter()->sort()->first();
+            $collectionMonth = today()->startOfMonth();
+            if ($lastDate !== null) {
+                $collectionMonth = $collectionMonth->min($lastDate->copy()->startOfMonth()->addMonth());
+            }
+            $collectionMonth = $collectionMonth->max($contract->start_date->copy()->startOfMonth());
+            $this->form->fill(['contract_id' => $contract->id, 'billing_period' => $collectionMonth->format('Y-m')]);
         }
     }
 

@@ -25,8 +25,8 @@ class InvoiceSeederTest extends TestCase
 
     public function test_skips_contract_with_missing_reading(): void
     {
-        $contract = Contract::factory()->active()->create();
-        PropertyService::factory()->for($contract->room->property)->create();
+        $contract = Contract::factory()->active()->create(['start_date' => today()->subMonthNoOverflow()->startOfMonth()]);
+        PropertyService::factory()->for($contract->room->property)->create(['effective_from' => today()->subMonthNoOverflow()->startOfMonth()]);
         $this->seed(InvoiceSeeder::class);
         $this->assertDatabaseCount('invoices', 0);
         $this->assertDatabaseCount('invoice_items', 0);

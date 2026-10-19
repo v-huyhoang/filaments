@@ -2,6 +2,9 @@
 
 namespace App\Filament\Resources\Rooms\Tables;
 
+use App\Filament\Resources\Rooms\RoomResource;
+use App\Models\Room;
+use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
@@ -9,6 +12,7 @@ use Filament\Actions\EditAction;
 use Filament\Actions\ForceDeleteBulkAction;
 use Filament\Actions\RestoreAction;
 use Filament\Actions\RestoreBulkAction;
+use Filament\Actions\ViewAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TrashedFilter;
@@ -20,6 +24,7 @@ class RoomsTable
     public static function configure(Table $table): Table
     {
         return $table
+            ->recordUrl(fn (Room $record): string => RoomResource::getUrl('view', ['record' => $record]))
             ->columns([
                 TextColumn::make('property.name')
                     ->label(fn (): string => __('tables.property'))
@@ -51,6 +56,12 @@ class RoomsTable
                     ->label(fn (): string => __('tables.status'))
                     ->badge()
                     ->searchable(),
+                TextColumn::make('previous_month_readings_count')
+                    ->label(fn (): string => __('resources.room.previous_readings', ['period' => today()->startOfMonth()->subMonth()->format('Y-m')]))
+                    ->numeric()->toggleable(),
+                TextColumn::make('unpaid_invoices_count')
+                    ->label(fn (): string => __('resources.room.unpaid_invoices'))
+                    ->numeric()->toggleable(),
                 TextColumn::make('created_at')
                     ->label(fn (): string => __('tables.created_at'))
                     ->dateTime()
@@ -71,6 +82,11 @@ class RoomsTable
                 TrashedFilter::make()->label(fn (): string => __('tables.trashed')),
             ])
             ->recordActions([
+                ViewAction::make(),
+                Action::make('meterReadings')->label(fn (): string => __('resources.room.meter_readings'))
+                    ->authorize('view')->url(fn (Room $record): string => RoomResource::getUrl('view', ['record' => $record, 'relation' => 'meter-readings'])),
+                Action::make('invoices')->label(fn (): string => __('invoices.plural_label'))
+                    ->authorize('view')->url(fn (Room $record): string => RoomResource::getUrl('view', ['record' => $record, 'relation' => 'invoices'])),
                 EditAction::make(),
                 DeleteAction::make(),
                 RestoreAction::make(),

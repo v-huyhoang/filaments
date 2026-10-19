@@ -9,6 +9,7 @@ use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 use Illuminate\Database\Eloquent\Builder;
 
@@ -30,6 +31,18 @@ class ContractForm
                     ->getOptionLabelFromRecordUsing(fn (Room $record): string => "{$record->property->name} - {$record->room_number}")
                     ->searchable()
                     ->preload()
+                    ->live()
+                    ->afterStateUpdated(function (Set $set, ?string $state, string $operation): void {
+                        if ($operation !== 'create') {
+                            return;
+                        }
+
+                        $rent = filled($state) ? Room::query()
+                            ->whereHas('property', fn (Builder $query) => $query->where('landlord_id', auth()->id()))
+                            ->whereKey($state)->value('base_rent') : null;
+
+                        $set('rent_amount', $rent);
+                    })
                     ->required(),
                 Select::make('tenant_id')
                     ->label(fn (): string => __('forms.tenant'))
@@ -44,7 +57,8 @@ class ContractForm
                     ->required(),
                 DatePicker::make('start_date')->label(fn (): string => __('forms.start_date'))->required(),
                 DatePicker::make('end_date')->label(fn (): string => __('forms.end_date'))->afterOrEqual('start_date'),
-                TextInput::make('rent_amount')->label(fn (): string => __('forms.rent_amount'))->numeric()->minValue(0)->required(),
+                TextInput::make('rent_amount')->label(fn (): string => __('forms.rent_amount'))
+                    ->helperText(fn (): string => __('forms.rent_amount_help'))->numeric()->minValue(0)->required(),
                 TextInput::make('deposit_amount')->label(fn (): string => __('forms.deposit_amount'))->numeric()->minValue(0)->default(0)->required(),
                 TextInput::make('payment_due_day')->label(fn (): string => __('forms.payment_due_day'))->numeric()->minValue(1)->maxValue(28)->required(),
                 Select::make('status')
