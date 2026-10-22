@@ -4,6 +4,7 @@ namespace App\Filament\Resources\MeterReadings;
 
 use App\Filament\Resources\MeterReadings\Pages\CreateMeterReading;
 use App\Filament\Resources\MeterReadings\Pages\ListMeterReadings;
+use App\Filament\Resources\MeterReadings\Pages\RecordPropertyMeterReadings;
 use App\Filament\Resources\MeterReadings\Schemas\MeterReadingForm;
 use App\Filament\Resources\MeterReadings\Tables\MeterReadingsTable;
 use App\Models\MeterReading;
@@ -20,6 +21,11 @@ class MeterReadingResource extends Resource
     protected static ?string $model = MeterReading::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+
+    public static function getNavigationUrl(): string
+    {
+        return static::getUrl('record-property');
+    }
 
     public static function getModelLabel(): string
     {
@@ -61,6 +67,7 @@ class MeterReadingResource extends Resource
         return [
             'index' => ListMeterReadings::route('/'),
             'create' => CreateMeterReading::route('/create'),
+            'record-property' => RecordPropertyMeterReadings::route('/record-property'),
         ];
     }
 }

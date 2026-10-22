@@ -8,6 +8,7 @@ use App\Filament\Resources\MeterReadings\Pages\ListMeterReadings;
 use App\Models\MeterReading;
 use App\Models\PropertyService;
 use App\Models\Room;
+use Filament\Forms\Components\Select;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use Tests\TestCase;
@@ -15,6 +16,32 @@ use Tests\TestCase;
 class MeterReadingResourceTest extends TestCase
 {
     use RefreshDatabase;
+
+    public function test_create_page_loads_owned_rooms_without_searching(): void
+    {
+        $room = Room::factory()->create();
+        Room::factory()->create();
+        $this->actingAs($room->property->landlord);
+
+        Livewire::test(CreateMeterReading::class)
+            ->assertFormFieldExists('room_id', fn (Select $field): bool => $field->getOptions() === [
+                $room->id => $room->property->name.' / '.$room->room_number,
+            ]);
+    }
+
+    public function test_create_page_loads_metered_services_after_selecting_room(): void
+    {
+        $room = Room::factory()->create();
+        $configuration = PropertyService::factory()->for($room->property)->create(['effective_from' => today()->startOfMonth()]);
+        PropertyService::factory()->create();
+        $this->actingAs($room->property->landlord);
+
+        Livewire::test(CreateMeterReading::class)
+            ->fillForm(['room_id' => $room->id])
+            ->assertFormFieldExists('service_id', fn (Select $field): bool => $field->getOptions() === [
+                $configuration->service_id => $configuration->service->name,
+            ]);
+    }
 
     public function test_list_and_route_binding_are_landlord_scoped(): void
     {

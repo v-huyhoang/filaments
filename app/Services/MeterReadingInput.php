@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\BillingMethod;
 use App\Enums\ContractStatus;
+use App\Models\Contract;
 use App\Models\MeterReading;
 use App\Models\PropertyService;
 use App\Models\Room;
@@ -38,19 +39,51 @@ class MeterReadingInput
      */
     public function metered(Room $room, Collection $configurations, CarbonImmutable $period, bool $lock = false): Collection
     {
-        $query = $room->contracts()->whereIn('status', [ContractStatus::Scheduled, ContractStatus::Active, ContractStatus::Terminated, ContractStatus::Expired])
+        $contracts = $this->contractsForPeriod($room->contracts()->getQuery(), $period, $lock);
+
+        return $this->resolveMetered($contracts, $configurations, $period, $lock);
+    }
+
+    /**
+     * @param  \Illuminate\Database\Eloquent\Collection<int, Room>  $rooms
+     * @param  Collection<int, PropertyService>  $configurations
+     * @return Collection<int, Collection<int, PropertyService>>
+     */
+    public function meteredForRooms(Collection $rooms, Collection $configurations, CarbonImmutable $period): Collection
+    {
+        $contracts = $this->contractsForPeriod(Contract::query()->whereIn('room_id', $rooms->modelKeys()), $period)->groupBy('room_id');
+
+        return $rooms->mapWithKeys(fn (Room $room): array => [
+            $room->id => $this->resolveMetered($contracts->get($room->id, collect()), $configurations, $period),
+        ]);
+    }
+
+    /** @return Collection<int, Contract> */
+    private function contractsForPeriod(Builder $query, CarbonImmutable $period, bool $lock = false): Collection
+    {
+        $query->whereIn('status', [ContractStatus::Scheduled, ContractStatus::Active, ContractStatus::Terminated, ContractStatus::Expired])
             ->whereDate('start_date', '<=', $period->endOfMonth())
             ->where(fn (Builder $query) => $query->whereNull('end_date')->orWhereDate('end_date', '>=', $period->startOfMonth()))
             ->where(fn (Builder $query) => $query->whereNull('terminated_at')->orWhereDate('terminated_at', '>', $period->startOfMonth()));
         if ($lock) {
             $query->lockForUpdate();
         }
-        $contracts = $query->with(['contractServices' => function (HasMany $versions) use ($period, $lock): void {
+
+        return $query->with(['contractServices' => function (HasMany $versions) use ($period, $lock): void {
             $versions->whereDate('effective_from', '<=', $period->startOfMonth()->toDateString())->orderByDesc('effective_from')->orderByDesc('id');
             if ($lock) {
                 $versions->lockForUpdate();
             }
         }])->get();
+    }
+
+    /**
+     * @param  Collection<int, Contract>  $contracts
+     * @param  Collection<int, PropertyService>  $configurations
+     * @return Collection<int, PropertyService>
+     */
+    private function resolveMetered(Collection $contracts, Collection $configurations, CarbonImmutable $period, bool $lock = false): Collection
+    {
         $resolved = $contracts->isEmpty() ? $configurations : $contracts->flatMap(
             fn ($contract): Collection => app(ContractServicePricing::class)->resolve($contract, $configurations, $period, $lock, $contract->contractServices)
         );

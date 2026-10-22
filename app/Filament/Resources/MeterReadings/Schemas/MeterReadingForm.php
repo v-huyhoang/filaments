@@ -28,7 +28,7 @@ class MeterReadingForm
             $roomId !== null ? Hidden::make('room_id')->default($roomId) : Select::make('room_id')->label(fn (): string => __('meter_readings.fields.room'))
                 ->relationship('room', 'room_number', fn (Builder $query) => $query->whereHas('property', fn (Builder $query) => $query->where('landlord_id', auth()->id()))->with('property'))
                 ->getOptionLabelFromRecordUsing(fn (Room $record): string => $record->property->name.' / '.$record->room_number)
-                ->searchable()->required()->live()->afterStateUpdated(function (Set $set): void {
+                ->searchable()->preload()->required()->live()->afterStateUpdated(function (Set $set): void {
                     $set('service_id', null);
                     $set('previous_value', null);
                     $set('current_value', null);
